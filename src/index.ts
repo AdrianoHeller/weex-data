@@ -93,16 +93,76 @@ interface IServerRouterProps{
 
 };
 
+
+interface IDbDataAuthProps{
+    username: string,
+    password: string,
+    register_date?: Date,
+    token?: string,
+    isLogged: boolean
+};
+
 const serverRouter: IServerRouterProps = {
     'ping': (payload,res) => {
         res.setHeader('Content-Type','application/json');
         res.writeHead(200);
         res.end(JSON.stringify({'Message':'Server Running'}));
     },
+    'login': async(payload,res) => {
+        res.setHeader('Content-Type','application/json');
+        const {
+            method,
+            body,
+            bodyParser } = payload;
+        const cursor = await connection;
+        let parsedBody = bodyParser(body);        
+        if(method === 'POST'){
+            cursor.query(`select * from login_data where username in ('${parsedBody['username']}') and password in ('${parsedBody['password']}')`,(err,data) => {
+            if(!err){
+                let dbData: IDbDataAuthProps[] = JSON.parse(JSON.stringify(data));
+                    if(Object.keys(dbData[0]).length > 0){                        
+                        cursor.query(`update login_data set isLogged_sn = 1,
+                        token = '37dh46frgt2gst2ff0yku9nj58fgjr9jf' where username = '${parsedBody['username']}'
+                        and password = '${parsedBody['password']}'`,(err,data) => {
+                            if(!err){
+                                res.writeHead(200);
+                                res.end(JSON.stringify({'Message':'User Logged Successfully'}));
+                            }else{
+                                res.writeHead(500);
+                                res.end(JSON.stringify({'Message':'User could not be logged'}));
+                            }
+                        });                                
+                    }else{
+                        res.writeHead(500);
+                        res.end(JSON.stringify({'Message':'Data does not match'}));
+                    }
+            }else{
+                res.writeHead(400);
+                res.end(JSON.stringify({'Message':'User not found in database.'}));
+            }           
+            });
+        }else{
+            res.writeHead(405);
+            res.end(JSON.stringify({'Message':'Protocol not Allowed'}));
+        } 
+    },
+    'logout': async(payload,res) => {
+        res.setHeader('Content-Type','application/json');
+        const cursor = await connection;
+        const data = await cursor.query('select * from login_data',(err,data) => {
+            if(!err){
+                res.writeHead(200);
+                res.end(JSON.stringify(JSON.parse(JSON.stringify(data))));
+            }else{
+                res.writeHead(404);
+                res.end();
+            }
+        }); 
+    },
     'weex': async(payload,res):Promise<any> => {
         res.setHeader('Content-Type','application/json');
         const cursor = await connection;
-        const data = await cursor.query('select * from empresa',(err,data) => {
+        const data = await cursor.query('select * from login_data',(err,data) => {
             if(!err){
                 res.writeHead(200);
                 res.end(JSON.stringify(JSON.parse(JSON.stringify(data))));

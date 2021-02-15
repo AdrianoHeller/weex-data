@@ -4,12 +4,10 @@ WORKDIR /src/app
 
 COPY package*.json ./
 
-RUN npm install && npm cache clear --force
+RUN npm install
 
 COPY . .
 
 EXPOSE 3001
-
-EXPOSE 5001
 
 CMD ["node","build/index.js"]
