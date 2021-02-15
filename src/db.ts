@@ -29,3 +29,5 @@ Main()
     });
 })
 .catch(err => console.error(err));
+
+export default connection;
