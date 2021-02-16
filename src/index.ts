@@ -1,13 +1,12 @@
 import http, { IncomingHttpHeaders, ServerResponse } from 'http';
 import https from 'https';
 import connection from './db';
-import url, { fileURLToPath } from 'url';
+import url from 'url';
 import { StringDecoder } from 'string_decoder';
 import { config } from 'dotenv';
 import { join } from 'path';
 import fs from 'fs';
-import { connect } from 'http2';
-import { stringify } from 'querystring';
+import { createHmac } from 'crypto';
 
 config({path:join(__dirname,'../.env')});
 
@@ -22,7 +21,8 @@ interface IPayloadProps{
     method: string|undefined,
     headers: IncomingHttpHeaders,
     body: string,
-    bodyParser: Function
+    bodyParser: Function,
+    hashData: Function
 };
 
 const httpServer = http.createServer((req,res) => {
@@ -56,6 +56,13 @@ const httpServer = http.createServer((req,res) => {
                     }
                 }catch(err){
                     return {};
+                }
+            },
+            hashData: (targetData:string): string => {
+                if(targetData.length > 0){
+                    return createHmac('sha-256',process.env.HASH_SCRT!).update(targetData).digest('hex');
+                }else{
+                    return '';
                 }
             }
         };
@@ -113,10 +120,17 @@ const serverRouter: IServerRouterProps = {
         const {
             method,
             body,
-            bodyParser } = payload;
+            bodyParser,
+            hashData } = payload;
         const cursor = await connection;
         let parsedBody = bodyParser(body);        
         if(method === 'POST'){
+            parsedBody['hashedPassword'] = hashData(parsedBody['password']);
+            delete parsedBody['password'];
+            parsedBody['password'] = parsedBody['hashedPassword'];
+            delete parsedBody['hashedPassword'];
+            parsedBody['token'] = '';
+            parsedBody['loginHour'] = new Date().getUTCDate(); 
             cursor.query(`select * from login_data where username in ('${parsedBody['username']}') and password in ('${parsedBody['password']}')`,(err,data) => {
             if(!err){
                 let dbData: IDbDataAuthProps[] = JSON.parse(JSON.stringify(data));
@@ -185,16 +199,21 @@ const serverRouter: IServerRouterProps = {
             res.end(JSON.stringify({'Message':'Protocol not Allowed'}));
         }  
     },
-    'weex': async(payload,res):Promise<any> => {
+    'register': async(payload,res):Promise<any> => {
         res.setHeader('Content-Type','application/json');
         const cursor = await connection;
-        const data = await cursor.query('select * from login_data',(err,data) => {
-            if(!err){
-                res.writeHead(200);
-                res.end(JSON.stringify(JSON.parse(JSON.stringify(data))));
+        const {
+            method,
+            headers,
+            body,
+            bodyParser} = payload;
+        let parsedBody = bodyParser(body);    
+        cursor.query(`select * from ? where ? = '${parsedBody.username}' and ? = '${parsedBody['password']}'`,['login_auth','username','password'],(err,results) => {
+            if(err){
+
             }else{
-                res.writeHead(404);
-                res.end();
+                res.writeHead(500);
+                res.end(JSON.stringify({'Message':'User already exists. Choose another email and user or change your password.'}));
             }
         });       
     },
