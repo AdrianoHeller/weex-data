@@ -116,19 +116,19 @@ const serverRouter: IServerRouterProps = {
         const cursor = await connection;
         let parsedBody = bodyParser(body);        
         if(method === 'POST'){
-            parsedBody['hashedPassword'] = hashData(parsedBody['password']);
-            delete parsedBody['password'];
-            parsedBody['password'] = parsedBody['hashedPassword'];
-            delete parsedBody['hashedPassword'];
+            parsedBody['senhaHash'] = hashData(parsedBody['senha']);
+            delete parsedBody['senha'];
+            parsedBody['senha'] = parsedBody['senhaHash'];
+            delete parsedBody['senhaHash'];
             parsedBody['token'] = '';
             parsedBody['loginHour'] = new Date().getUTCDate(); 
-            cursor.query(`select * from login_data where username in ('${parsedBody['username']}') and password in ('${parsedBody['password']}')`,(err,data) => {
+            cursor.query(`select * from auth_login where email in ('${parsedBody['email']}') and senha in ('${parsedBody['senha']}')`,(err,data) => {
             if(!err){
                 let dbData: IDbDataAuthProps[] = JSON.parse(JSON.stringify(data));
                     if(Object.keys(dbData[0]).length > 0){                        
-                        cursor.query(`update login_data set isLogged_sn = 1,
-                        token = '37dh46frgt2gst2ff0yku9nj58fgjr9jf' where username = '${parsedBody['username']}'
-                        and password = '${parsedBody['password']}'`,(err,data) => {
+                        cursor.query(`update auth_login set isLogged_sn = 1,
+                        token = '37dh46frgt2gst2ff0yku9nj58fgjr9jf' where email = '${parsedBody['email']}'
+                        and senha = '${parsedBody['senha']}'`,(err,data) => {
                             if(!err){
                                 res.writeHead(200);
                                 res.end(JSON.stringify({'Message':'User Logged Successfully'}));
@@ -160,14 +160,14 @@ const serverRouter: IServerRouterProps = {
         const cursor = await connection;
         let parsedBody = bodyParser(body);        
         if(method === 'POST'){
-            cursor.query(`select * from login_data where username in ('${parsedBody['username']}')
-             and password in ('${parsedBody['password']}') and isLogged_sn = 1`,(err,data) => {
+            cursor.query(`select * from auth_login where email in ('${parsedBody['email']}')
+             and senha in ('${parsedBody['senha']}') and isLogged_sn = 1`,(err,data) => {
             if(!err){
                 let dbData: IDbDataAuthProps[] = JSON.parse(JSON.stringify(data));
                     if(Object.keys(dbData[0]).length > 0){                        
-                        cursor.query(`update login_data set isLogged_sn = 0,
-                        token = '' where username = '${parsedBody['username']}'
-                        and password = '${parsedBody['password']}'`,(err,data) => {
+                        cursor.query(`update auth_login set isLogged = 0,
+                        token = '' where email = '${parsedBody['email']}'
+                        and senha = '${parsedBody['senha']}'`,(err,data) => {
                             if(!err){
                                 res.writeHead(200);
                                 res.end(JSON.stringify({'Message':'User Unlogged with success.'}));
@@ -199,9 +199,19 @@ const serverRouter: IServerRouterProps = {
             body,
             bodyParser} = payload;
         let parsedBody = bodyParser(body);    
-        cursor.query(`select * from ? where ? = '${parsedBody.username}' and ? = '${parsedBody['password']}'`,['login_auth','username','password'],(err,results) => {
+        cursor.query(`select * from funcionario where email = '${parsedBody.email}' and password = '${parsedBody['password']}'`,(err,results) => {
             if(err){
-
+                cursor.query(`insert into funcionario(nome,data_nascimento,email,cargo,fk_idempresa)values(
+                    '${parsedBody.nome}','${parsedBody.data_nascimento}','${parsedBody.email}','${parsedBody.cargo}','${parsedBody.fk_idempresa}'
+                )`,(err) => {
+                    if(!err){
+                        res.writeHead(200);
+                        res.end(JSON.stringify({'Message':'User registered.'}));
+                    }else{
+                        res.writeHead(200);
+                        res.end(JSON.stringify({'Message':'User registered.'}));
+                    }
+                });
             }else{
                 res.writeHead(500);
                 res.end(JSON.stringify({'Message':'User already exists. Choose another email and user or change your password.'}));
