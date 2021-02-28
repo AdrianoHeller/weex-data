@@ -10,11 +10,6 @@ import { createHmac } from 'crypto';
 
 config({path:join(__dirname,'../.env')});
 
-// const serverInfo = {
-//     cert: fs.readFileSync(join(__dirname,'../certs/')),
-//     key: fs.readFileSync(join(__dirname,'../certs/'))
-// };
-
 interface IPayloadProps{
     path: string|any,
     params: URLSearchParams,
@@ -79,9 +74,6 @@ const httpServer = http.createServer((req,res) => {
     });
 });
 
-// const httpsServer = https.createServer(serverInfo,(req,res) => {
-
-// });
 
 interface ICallbackProps{
     (err?: Error, result?: object ):void,    
@@ -97,7 +89,6 @@ interface IServerRouterProps{
     'ping': (payload: IPayloadProps, res: ServerResponse) => void,
     [filteredPath:string]: (payload: IPayloadProps,res: ServerResponse) => void,
     'notFound': (payload: IPayloadProps, res: ServerResponse) => void,
-
 };
 
 
@@ -216,6 +207,30 @@ const serverRouter: IServerRouterProps = {
                 res.end(JSON.stringify({'Message':'User already exists. Choose another email and user or change your password.'}));
             }
         });       
+    },
+    'fullData': async(payload,res):Promise<any> => {
+        res.setHeader('Content-Type','application/json');
+        const cursor = await connection;
+        const {
+            method,
+            headers,
+            body,
+            bodyParser} = payload;
+            if(method === 'GET'){
+                cursor.query(`select username,amount,earn,spent from login_data`,(err,result) => {
+                    if(!err){
+                        const fullData = JSON.parse(JSON.stringify(result));
+                        res.writeHead(200);
+                        res.end(JSON.stringify(fullData));
+                    }else{
+                        res.writeHead(400);
+                        res.end(JSON.stringify({'Message':'User not found'}));
+                    }
+                });
+            }else{
+                res.writeHead(405);
+                res.end(JSON.stringify({'Message':'Method not allowed.'}));
+            }
     },
     'notFound': (payload,res) => {
         res.setHeader('Content-Type','application/json');

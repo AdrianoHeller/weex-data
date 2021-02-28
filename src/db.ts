@@ -8,8 +8,7 @@ const connection = mysql.createConnection({
     host: process.env.MYSQL_DEV_ENV,
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_ROOT_PASSWORD,
-    database: process.env.MYSQL_CMP_DB,
-      
+    database: process.env.MYSQL_CMP_DB,      
 });
 
 const Main = async():Promise<any> => {
