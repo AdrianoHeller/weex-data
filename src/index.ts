@@ -17,7 +17,8 @@ interface IPayloadProps{
     headers: IncomingHttpHeaders,
     body: string,
     bodyParser: Function,
-    hashData: Function
+    hashData: Function,
+    createToken: Function
 };
 
 const httpServer = http.createServer((req,res) => {
@@ -59,6 +60,16 @@ const httpServer = http.createServer((req,res) => {
                 }else{
                     return '';
                 }
+            },
+            createToken: (tokenLength: number): string => {
+                const possibleChars: string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let newToken: string = '';
+                    while(newToken.length < tokenLength){
+                        const randomChosenPosition = Math.floor(Math.random() * possibleChars.length);
+                        const randomCharacter = possibleChars.charAt(randomChosenPosition);
+                        newToken += randomCharacter;
+                    };
+                    return newToken;
             }
         };
 
@@ -94,7 +105,10 @@ interface IServerRouterProps{
 
 interface IDbDataAuthProps{
     username: string,
+    email: string,
     password: string,
+    company: string,
+    companyRole: string,
     register_date?: Date,
     token?: string,
     isLogged: boolean
@@ -112,44 +126,29 @@ const serverRouter: IServerRouterProps = {
             method,
             body,
             bodyParser,
+            createToken,
             hashData } = payload;
-        const cursor = await connection;
+        const cursor = await connection.db();
         let parsedBody = bodyParser(body);        
         if(method === 'POST'){
-            parsedBody['senhaHash'] = hashData(parsedBody['senha']);
-            delete parsedBody['senha'];
-            parsedBody['senha'] = parsedBody['senhaHash'];
-            delete parsedBody['senhaHash'];
-            parsedBody['token'] = '';
-            parsedBody['loginHour'] = new Date().getUTCDate(); 
-            cursor.query(`select * from auth_login where email in ('${parsedBody['email']}') and senha in ('${parsedBody['senha']}')`,(err,data) => {
-            if(!err){
-                let dbData: IDbDataAuthProps[] = JSON.parse(JSON.stringify(data));
-                    if(Object.keys(dbData[0]).length > 0){                        
-                        cursor.query(`update auth_login set isLogged_sn = 1,
-                        token = '37dh46frgt2gst2ff0yku9nj58fgjr9jf' where email = '${parsedBody['email']}'
-                        and senha = '${parsedBody['senha']}'`,(err,data) => {
-                            if(!err){
-                                res.writeHead(200);
-                                res.end(JSON.stringify({'Message':'User Logged Successfully'}));
-                            }else{
-                                res.writeHead(500);
-                                res.end(JSON.stringify({'Message':'User could not be logged'}));
-                            }
-                        });                                
-                    }else{
-                        res.writeHead(500);
-                        res.end(JSON.stringify({'Message':'Data does not match'}));
-                    }
-            }else{
-                res.writeHead(400);
-                res.end(JSON.stringify({'Message':'User not found in database.'}));
-            }           
-            });
+            parsedBody['hashedPassword'] = hashData(parsedBody['password']);
+            delete parsedBody['password'];
+            parsedBody['password'] = parsedBody['hashedPassword'];
+            delete parsedBody['hashedPassword'];
+            parsedBody['token'] = createToken(50); 
+            parsedBody['loginHour'] = new Date().getUTCDate();
+            const user = await cursor.collection('login').aggregate([{$match:{username: parsedBody['username'], password: parsedBody['password']}}]).toArray();
+                if(user){
+                    res.writeHead(200);
+                    res.end(JSON.stringify(user));
+                }else{
+                    res.writeHead(500);
+                    res.end();
+                }
         }else{
             res.writeHead(405);
-            res.end(JSON.stringify({'Message':'Protocol not Allowed'}));
-        } 
+            res.end();
+        }
     },
     'logout': async(payload,res) => {
         res.setHeader('Content-Type','application/json');
@@ -160,34 +159,7 @@ const serverRouter: IServerRouterProps = {
         const cursor = await connection;
         let parsedBody = bodyParser(body);        
         if(method === 'POST'){
-            cursor.query(`select * from auth_login where email in ('${parsedBody['email']}')
-             and senha in ('${parsedBody['senha']}') and isLogged_sn = 1`,(err,data) => {
-            if(!err){
-                let dbData: IDbDataAuthProps[] = JSON.parse(JSON.stringify(data));
-                    if(Object.keys(dbData[0]).length > 0){                        
-                        cursor.query(`update auth_login set isLogged = 0,
-                        token = '' where email = '${parsedBody['email']}'
-                        and senha = '${parsedBody['senha']}'`,(err,data) => {
-                            if(!err){
-                                res.writeHead(200);
-                                res.end(JSON.stringify({'Message':'User Unlogged with success.'}));
-                            }else{
-                                res.writeHead(500);
-                                res.end(JSON.stringify({'Message':'User could not be unlogged'}));
-                            }
-                        });                                
-                    }else{
-                        res.writeHead(500);
-                        res.end(JSON.stringify({'Message':'Data does not match'}));
-                    }
-            }else{
-                res.writeHead(400);
-                res.end(JSON.stringify({'Message':'User not found in database.'}));
-            }           
-            });
-        }else{
-            res.writeHead(405);
-            res.end(JSON.stringify({'Message':'Protocol not Allowed'}));
+        
         }  
     },
     'register': async(payload,res):Promise<any> => {
@@ -199,48 +171,29 @@ const serverRouter: IServerRouterProps = {
             body,
             bodyParser} = payload;
         let parsedBody = bodyParser(body);    
-        cursor.query(`select * from funcionario where email = '${parsedBody.email}' and password = '${parsedBody['password']}'`,(err,results) => {
-            if(err){
-                cursor.query(`insert into funcionario(nome,data_nascimento,email,cargo,fk_idempresa)values(
-                    '${parsedBody.nome}','${parsedBody.data_nascimento}','${parsedBody.email}','${parsedBody.cargo}','${parsedBody.fk_idempresa}'
-                )`,(err) => {
-                    if(!err){
-                        res.writeHead(200);
-                        res.end(JSON.stringify({'Message':'User registered.'}));
-                    }else{
-                        res.writeHead(200);
-                        res.end(JSON.stringify({'Message':'User registered.'}));
-                    }
-                });
-            }else{
-                res.writeHead(500);
-                res.end(JSON.stringify({'Message':'User already exists. Choose another email and user or change your password.'}));
-            }
-        });       
+               
     },
-    'fullData': async(payload,res):Promise<any> => {
+    'usuarios': async(payload,res):Promise<any> => {
         res.setHeader('Content-Type','application/json');
-        const cursor = await connection;
+        const cursor = await connection.db();
         const {
             method,
             headers,
             body,
             bodyParser} = payload;
             if(method === 'GET'){
-                cursor.query(`select username,amount,earn,spent from login_data`,(err,result) => {
-                    if(!err){
-                        const fullData = JSON.parse(JSON.stringify(result));
-                        res.writeHead(200);
-                        res.end(JSON.stringify(fullData));
-                    }else{
-                        res.writeHead(400);
-                        res.end(JSON.stringify({'Message':'User not found'}));
-                    }
-                });
+                try{
+                    const data = await cursor.collection('weagle').aggregate([]).toArray()
+                    res.writeHead(200);
+                    res.end(JSON.stringify(data))
+                }catch(err){
+                    res.writeHead(500);
+                    res.end();    
+                }               
             }else{
                 res.writeHead(405);
-                res.end(JSON.stringify({'Message':'Method not allowed.'}));
-            }
+                res.end();
+            }   
     },
     'notFound': (payload,res) => {
         res.setHeader('Content-Type','application/json');

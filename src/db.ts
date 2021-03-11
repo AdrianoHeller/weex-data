@@ -1,14 +1,14 @@
-import mysql from 'mysql';
+import { MongoClient } from 'mongodb';
 import { config } from 'dotenv';
 import { join } from 'path';
 
 config({ path: join(__dirname,'../.env')});
 
-const connection = mysql.createConnection({
-    host: process.env.MYSQL_HOST,
-    database: process.env.MYSQL_DBNAME,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_USER_PWD,
+const connectionString: string = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PWD}@cluster0.t0iml.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`;
+
+const connection = new MongoClient(connectionString,{
+    useNewUrlParser: true,
+    useUnifiedTopology: true
 });
 
 const Main = async():Promise<any> => {
