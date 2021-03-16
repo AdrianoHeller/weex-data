@@ -173,7 +173,7 @@ const serverRouter: IServerRouterProps = {
         let parsedBody = bodyParser(body);    
                
     },
-    'usuarios': async(payload,res):Promise<any> => {
+    'usuarios/weagle': async(payload,res):Promise<any> => {
         res.setHeader('Content-Type','application/json');
         const cursor = await connection.db();
         const {
@@ -184,6 +184,28 @@ const serverRouter: IServerRouterProps = {
             if(method === 'GET'){
                 try{
                     const data = await cursor.collection('weagle').aggregate([]).toArray()
+                    res.writeHead(200);
+                    res.end(JSON.stringify(data))
+                }catch(err){
+                    res.writeHead(500);
+                    res.end();    
+                }               
+            }else{
+                res.writeHead(405);
+                res.end();
+            }   
+    },
+    'usuarios/welcome': async(payload,res):Promise<any> => {
+        res.setHeader('Content-Type','application/json');
+        const cursor = await connection.db();
+        const {
+            method,
+            headers,
+            body,
+            bodyParser} = payload;
+            if(method === 'GET'){
+                try{
+                    const data = await cursor.collection('welcome').aggregate([]).toArray()
                     res.writeHead(200);
                     res.end(JSON.stringify(data))
                 }catch(err){
