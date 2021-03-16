@@ -230,23 +230,28 @@ const serverRouter: IServerRouterProps = {
             method,
             headers,
             body,
+            hashData,
             bodyParser} = payload;
             let parsedBody = bodyParser(payload.body);
             if(method === 'POST'){
                 if(parsedBody['NOME_COMPLETO'] && parsedBody['EMAIL'] && parsedBody['EMPRESA'] && parsedBody['CARGO'] && 
                 parsedBody['PASSWORD']){
                 try{
+                    parsedBody['HASHED_PASSWORD'] = hashData(parsedBody['PASSWORD']);
+                    delete parsedBody['PASSWORD'];
+                    parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
+                    delete parsedBody['HASHED_PASSWORD'];
                     parsedBody['HORA_LOGIN'] = new Date().getUTCDate();
                     const checkUser = await cursor.collection('welcome').findOne(
                         { NOME_COMPLETO: parsedBody['NOME_COMPLETO'], EMAIL: parsedBody['EMAIL'] });
-                    if(!checkUser){
-                        const data = await cursor.collection('welcome').insertOne(parsedBody);
-                        res.writeHead(200);
-                        res.end(JSON.stringify({'MESSAGE':'USUARIO REGISTRADO!'}));
-                    }else{
-                        res.writeHead(500);
-                        res.end(JSON.stringify({'MESSAGE':'USUARIO EXISTENTE NA BASE. UTILIZE OUTRO E-MAIL OU ALTERE SUA SENHA.'}));
-                    }                    
+                        if(!checkUser){
+                            const data = await cursor.collection('welcome').insertOne(parsedBody);
+                            res.writeHead(200);
+                            res.end(JSON.stringify({'MESSAGE':'USUARIO REGISTRADO!'}));
+                        }else{
+                            res.writeHead(500);
+                            res.end(JSON.stringify({'MESSAGE':'USUARIO EXISTENTE NA BASE. UTILIZE OUTRO E-MAIL OU ALTERE SUA SENHA.'}));
+                        }                    
                 }catch(err){
                     res.writeHead(500);
                     res.end();    
