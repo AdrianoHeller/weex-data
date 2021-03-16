@@ -104,15 +104,17 @@ interface IServerRouterProps{
 
 
 interface IDbDataAuthProps{
-    username: string,
-    email: string,
-    password: string,
-    company: string,
-    companyRole: string,
-    register_date?: Date,
-    token?: string,
-    isLogged: boolean
+    NOME_COMPLETO: string,
+    EMAIL: string,
+    PASSWORD: string,
+    EMPRESA: string,
+    CARGO: string,
+    DATA_REGISTRO?: Date,
+    TOKEN?: string,
+    LOGADO: boolean,
+    HORA_LOGIN: Date
 };
+
 
 const serverRouter: IServerRouterProps = {
     'ping': (payload,res) => {
@@ -131,14 +133,18 @@ const serverRouter: IServerRouterProps = {
         const cursor = await connection.db();
         let parsedBody = bodyParser(body);        
         if(method === 'POST'){
-            parsedBody['hashedPassword'] = hashData(parsedBody['password']);
-            delete parsedBody['password'];
-            parsedBody['password'] = parsedBody['hashedPassword'];
-            delete parsedBody['hashedPassword'];
-            parsedBody['token'] = createToken(50); 
-            parsedBody['loginHour'] = new Date().getUTCDate();
-            const user = await cursor.collection('login').aggregate([{$match:{username: parsedBody['username'], password: parsedBody['password']}}]).toArray();
-                if(user){
+            parsedBody['HASHED_PASSWORD'] = hashData(parsedBody['PASSWORD']);
+            delete parsedBody['PASSWORD'];
+            parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
+            delete parsedBody['HASHED_PASSWORD'];
+            parsedBody['TOKEN'] = createToken(50); 
+            parsedBody['HORA_LOGIN'] = new Date().getUTCDate();
+            const user = await cursor.collection('login').aggregate([
+                { $match:{
+                    NOME_COMPLETO: parsedBody['NOME_COMPLETO'],
+                    PASSWORD: parsedBody['PASSWORD']}
+                }]).toArray();
+                if(user.length > 0){
                     res.writeHead(200);
                     res.end(JSON.stringify(user));
                 }else{
@@ -185,7 +191,7 @@ const serverRouter: IServerRouterProps = {
                 try{
                     const data = await cursor.collection('weagle').aggregate([]).toArray()
                     res.writeHead(200);
-                    res.end(JSON.stringify(data))
+                    res.end(JSON.stringify(data));
                 }catch(err){
                     res.writeHead(500);
                     res.end();    
@@ -212,6 +218,40 @@ const serverRouter: IServerRouterProps = {
                     res.writeHead(500);
                     res.end();    
                 }               
+            }else{
+                res.writeHead(405);
+                res.end();
+            }   
+    },
+    'registrar/welcome': async(payload,res):Promise<any> => {
+        res.setHeader('Content-Type','application/json');
+        const cursor = await connection.db();
+        const {
+            method,
+            headers,
+            body,
+            bodyParser} = payload;
+            let parsedBody = bodyParser(payload.body);
+            if(method === 'POST'){
+                if(parsedBody['NOME_COMPLETO'] && parsedBody['EMAIL'] && parsedBody['EMPRESA'] && parsedBody['CARGO'] && 
+                parsedBody['PASSWORD']){
+                try{
+                    parsedBody['HORA_LOGIN'] = new Date().getUTCDate();
+                    const checkUser = await cursor.collection('welcome').findOne(
+                        { NOME_COMPLETO: parsedBody['NOME_COMPLETO'], EMAIL: parsedBody['EMAIL'] });
+                    if(!checkUser){
+                        const data = await cursor.collection('welcome').insertOne(parsedBody);
+                        res.writeHead(200);
+                        res.end(JSON.stringify({'MESSAGE':'USUARIO REGISTRADO!'}));
+                    }else{
+                        res.writeHead(500);
+                        res.end(JSON.stringify({'MESSAGE':'USUARIO EXISTENTE NA BASE. UTILIZE OUTRO E-MAIL OU ALTERE SUA SENHA.'}));
+                    }                    
+                }catch(err){
+                    res.writeHead(500);
+                    res.end();    
+                }    
+            }           
             }else{
                 res.writeHead(405);
                 res.end();
