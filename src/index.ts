@@ -235,7 +235,8 @@ const serverRouter: IServerRouterProps = {
             let parsedBody = bodyParser(payload.body);
             if(method === 'POST'){
                 if(parsedBody['NOME_COMPLETO'] && parsedBody['EMAIL'] && parsedBody['EMPRESA'] && parsedBody['CARGO'] && 
-                parsedBody['PASSWORD']){
+                parsedBody['PASSWORD'] && parsedBody['ENDERECO'] && parsedBody['COMPLEMENTO'] && parsedBody['NUMERO'] && 
+                parsedBody['BAIRRO'] && parsedBody['CEP'] && parsedBody['CIDADE'] && parsedBody['SEXO']){
                 try{
                     parsedBody['HASHED_PASSWORD'] = hashData(parsedBody['PASSWORD']);
                     delete parsedBody['PASSWORD'];
