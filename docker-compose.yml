@@ -8,15 +8,7 @@ services:
     ports:
       - "3001:3001"
       - "5001:5001"
-    restart: always  
-  mysql-db:
-    image: mysql:8.0
-    env_file: ./.env
-    ports:
-      - "3306:3306"
-    volumes:
-      - weex:/var/lib/mysql
-
+    restart: always
 volumes:
   weex:        
 

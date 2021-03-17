@@ -223,7 +223,7 @@ const serverRouter: IServerRouterProps = {
                 res.end();
             }   
     },
-    'registrar/welcome': async(payload,res):Promise<any> => {
+    'registrar': async(payload,res):Promise<any> => {
         res.setHeader('Content-Type','application/json');
         const cursor = await connection.db();
         const {
@@ -242,17 +242,10 @@ const serverRouter: IServerRouterProps = {
                     delete parsedBody['PASSWORD'];
                     parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
                     delete parsedBody['HASHED_PASSWORD'];
-                    parsedBody['HORA_LOGIN'] = new Date().getUTCDate();
-                    const checkUser = await cursor.collection('welcome').findOne(
-                        { NOME_COMPLETO: parsedBody['NOME_COMPLETO'], EMAIL: parsedBody['EMAIL'] });
-                        if(!checkUser){
-                            const data = await cursor.collection('welcome').insertOne(parsedBody);
-                            res.writeHead(200);
-                            res.end(JSON.stringify({'MESSAGE':'USUARIO REGISTRADO!'}));
-                        }else{
-                            res.writeHead(500);
-                            res.end(JSON.stringify({'MESSAGE':'USUARIO EXISTENTE NA BASE. UTILIZE OUTRO E-MAIL OU ALTERE SUA SENHA.'}));
-                        }                    
+                    parsedBody['HORA_LOGIN'] = new Date().getUTCDate();                
+                    const data = await cursor.collection(parsedBody['EMPRESA']).insertOne(parsedBody);
+                    res.writeHead(200);
+                    res.end(JSON.stringify(data));                                         
                 }catch(err){
                     res.writeHead(500);
                     res.end();    
