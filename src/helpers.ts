@@ -11,9 +11,10 @@ export const interpolateBirthDate = (birthDate:string) => {
         const month = arrayDate[1];
         const year = arrayDate[2];
         return `${month}/${day}/${year}`;
-    }else if(birthDate.length < 10){
-        if(['0','1','2','3'].includes(birthDate[0]) && + birthDate[1] > 3 ){
-
-        }
-    }
+    }else{
+        const day = birthDate.substring(0,2);
+        const month = birthDate.substring(2,4);   
+        const year = birthDate.substring(4,8);
+        return `${month}/${day}/${year}`;
+    };
 };
