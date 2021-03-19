@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import fs from 'fs';
 import { createHmac } from 'crypto';
+import cors from 'cors';
 
 config({path:join(__dirname,'../.env')});
 
@@ -56,7 +57,7 @@ const httpServer = http.createServer((req,res) => {
             },
             hashData: (targetData:string): string => {
                 if(targetData.length > 0){
-                    return createHmac('sha-256',process.env.HASH_SCRT!).update(targetData).digest('hex');
+                    return createHmac('sha256',process.env.HASH_SCRT!).update(targetData).digest('hex');
                 }else{
                     return '';
                 }
@@ -118,12 +119,34 @@ interface IDbDataAuthProps{
 
 const serverRouter: IServerRouterProps = {
     'ping': (payload,res) => {
-        res.setHeader('Content-Type','application/json');
-        res.writeHead(200);
-        res.end(JSON.stringify({'Message':'Server Running'}));
+        const headers = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'GET,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,headers);
+            res.end();
+            return;
+        };
+        if(['GET'].includes(payload.method!)){
+            res.writeHead(200);
+            res.end(JSON.stringify({'Message':'Server Running'}));
+        };
     },
     'login': async(payload,res) => {
-        res.setHeader('Content-Type','application/json');
+        const headers = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,headers);
+            res.end();
+            return;
+        };
         const {
             method,
             body,
@@ -145,42 +168,55 @@ const serverRouter: IServerRouterProps = {
                     PASSWORD: parsedBody['PASSWORD']}
                 }]).toArray();
                 if(user.length > 0){
-                    res.writeHead(200);
+                    res.writeHead(200,headers);
                     res.end(JSON.stringify(user));
                 }else{
-                    res.writeHead(500);
-                    res.end();
+                    res.writeHead(500,headers);
+                    res.end(JSON.stringify({'Message':'No user registered in database.'}));
                 }
         }else{
-            res.writeHead(405);
-            res.end();
+            res.writeHead(405,headers);
+            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
     },
     'logout': async(payload,res) => {
-        res.setHeader('Content-Type','application/json');
+        const headers = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,headers);
+            res.end();
+            return;
+        };
         const {
             method,
             body,
             bodyParser } = payload;
         const cursor = await connection;
         let parsedBody = bodyParser(body);        
-        if(method === 'POST'){
-        
-        }  
-    },
-    'register': async(payload,res):Promise<any> => {
-        res.setHeader('Content-Type','application/json');
-        const cursor = await connection;
-        const {
-            method,
-            headers,
-            body,
-            bodyParser} = payload;
-        let parsedBody = bodyParser(body);    
-               
-    },
+        if(['POST'].includes(payload.method!)){
+            res.writeHead(200,headers);
+            res.end(JSON.stringify({'Message':'Server Running.'}));
+        }else{
+            res.writeHead(405,headers);
+            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+        };
+    },   
     'usuarios/weagle': async(payload,res):Promise<any> => {
-        res.setHeader('Content-Type','application/json');
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
         const cursor = await connection.db();
         const {
             method,
@@ -190,18 +226,19 @@ const serverRouter: IServerRouterProps = {
             if(method === 'GET'){
                 try{
                     const data = await cursor.collection('weagle').aggregate([]).toArray()
-                    res.writeHead(200);
+                    res.writeHead(200,header);
                     res.end(JSON.stringify(data));
                 }catch(err){
-                    res.writeHead(500);
+                    res.writeHead(500,header);
                     res.end();    
                 }               
             }else{
-                res.writeHead(405);
-                res.end();
+                res.writeHead(405,header);
+                res.end(JSON.stringify({'Message':'Method not Allowed.'}));
             }   
     },
     'usuarios/welcome': async(payload,res):Promise<any> => {
+        res.setHeader('Access-Control-Allow-Origin','http://localhost:3000');
         res.setHeader('Content-Type','application/json');
         const cursor = await connection.db();
         const {
@@ -224,6 +261,7 @@ const serverRouter: IServerRouterProps = {
             }   
     },
     'registrar': async(payload,res):Promise<any> => {
+        res.setHeader('Access-Control-Allow-Origin','http://localhost:3000');
         res.setHeader('Content-Type','application/json');
         const cursor = await connection.db();
         const {
@@ -248,7 +286,7 @@ const serverRouter: IServerRouterProps = {
                     res.end(JSON.stringify(data));                                         
                 }catch(err){
                     res.writeHead(500);
-                    res.end();    
+                    res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
                 }    
             }           
             }else{
@@ -257,6 +295,7 @@ const serverRouter: IServerRouterProps = {
             }   
     },
     'notFound': (payload,res) => {
+        res.setHeader('Access-Control-Allow-Origin','http://localhost:3000');
         res.setHeader('Content-Type','application/json');
         res.writeHead(404);
         res.end(JSON.stringify({'Message':'Path not found'}));
