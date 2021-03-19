@@ -7,7 +7,6 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import fs from 'fs';
 import { createHmac } from 'crypto';
-import cors from 'cors';
 
 config({path:join(__dirname,'../.env')});
 
@@ -112,8 +111,8 @@ interface IDbDataAuthProps{
     CARGO: string,
     DATA_REGISTRO?: Date,
     TOKEN?: string,
-    LOGADO: boolean,
-    HORA_LOGIN: Date
+    LOGADO?: boolean,
+    HORA_LOGIN?: Date
 };
 
 
@@ -288,25 +287,30 @@ const serverRouter: IServerRouterProps = {
             body,
             hashData,
             bodyParser} = payload;
-            let parsedBody = bodyParser(payload.body);
+            let parsedBody = bodyParser(body);
             if(method === 'POST'){
                 if(parsedBody['NOME_COMPLETO'] && parsedBody['EMAIL'] && parsedBody['EMPRESA'] && parsedBody['CARGO'] && 
                 parsedBody['PASSWORD'] && parsedBody['ENDERECO'] && parsedBody['COMPLEMENTO'] && parsedBody['NUMERO'] && 
                 parsedBody['BAIRRO'] && parsedBody['CEP'] && parsedBody['CIDADE'] && parsedBody['SEXO']){
-                try{
-                    parsedBody['HASHED_PASSWORD'] = hashData(parsedBody['PASSWORD']);
-                    delete parsedBody['PASSWORD'];
-                    parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
-                    delete parsedBody['HASHED_PASSWORD'];
-                    parsedBody['HORA_LOGIN'] = new Date().getUTCDate();                
-                    const data = await cursor.collection(parsedBody['EMPRESA']).insertOne(parsedBody);
-                    res.writeHead(200,header);
-                    res.end(JSON.stringify(data));                                         
-                }catch(err){
-                    res.writeHead(500,header);
-                    res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
-                }    
-            }           
+                    // if(parsedBody){
+                    try{
+                        parsedBody['HASHED_PASSWORD'] = hashData(parsedBody['PASSWORD']);
+                        delete parsedBody['PASSWORD'];
+                        parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
+                        delete parsedBody['HASHED_PASSWORD'];
+                        parsedBody['HORA_LOGIN'] = new Date();                
+                        const data = await cursor.collection(parsedBody['EMPRESA'].toLowerCase()).insertOne(parsedBody);
+                        console.log(parsedBody);
+                        res.writeHead(200,header);
+                        res.end(JSON.stringify(data));                                         
+                    }catch(err){
+                        res.writeHead(500,header);
+                        res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
+                    }
+                }else{
+                    res.writeHead(400,header);
+                    res.end(JSON.stringify({'Message':'Missing Fields.'}));    
+                }                      
             }else{
                 res.writeHead(405,header);
                 res.end(JSON.stringify({'Message':'Method not Allowed.'}));
