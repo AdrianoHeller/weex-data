@@ -238,8 +238,17 @@ const serverRouter: IServerRouterProps = {
             }   
     },
     'usuarios/welcome': async(payload,res):Promise<any> => {
-        res.setHeader('Access-Control-Allow-Origin','http://localhost:3000');
-        res.setHeader('Content-Type','application/json');
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
         const cursor = await connection.db();
         const {
             method,
@@ -249,20 +258,29 @@ const serverRouter: IServerRouterProps = {
             if(method === 'GET'){
                 try{
                     const data = await cursor.collection('welcome').aggregate([]).toArray()
-                    res.writeHead(200);
+                    res.writeHead(200,header);
                     res.end(JSON.stringify(data))
                 }catch(err){
-                    res.writeHead(500);
+                    res.writeHead(500,header);
                     res.end();    
                 }               
             }else{
-                res.writeHead(405);
-                res.end();
+                res.writeHead(405,header);
+                res.end(JSON.stringify({'Message':'Method not Allowed.'}));
             }   
     },
     'registrar': async(payload,res):Promise<any> => {
-        res.setHeader('Access-Control-Allow-Origin','http://localhost:3000');
-        res.setHeader('Content-Type','application/json');
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
         const cursor = await connection.db();
         const {
             method,
@@ -282,16 +300,16 @@ const serverRouter: IServerRouterProps = {
                     delete parsedBody['HASHED_PASSWORD'];
                     parsedBody['HORA_LOGIN'] = new Date().getUTCDate();                
                     const data = await cursor.collection(parsedBody['EMPRESA']).insertOne(parsedBody);
-                    res.writeHead(200);
+                    res.writeHead(200,header);
                     res.end(JSON.stringify(data));                                         
                 }catch(err){
-                    res.writeHead(500);
+                    res.writeHead(500,header);
                     res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
                 }    
             }           
             }else{
-                res.writeHead(405);
-                res.end();
+                res.writeHead(405,header);
+                res.end(JSON.stringify({'Message':'Method not Allowed.'}));
             }   
     },
     'notFound': (payload,res) => {
