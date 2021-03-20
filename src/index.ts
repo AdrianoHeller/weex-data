@@ -430,9 +430,18 @@ const serverRouter: IServerRouterProps = {
             }   
     },
     'notFound': (payload,res) => {
-        res.setHeader('Access-Control-Allow-Origin','http://localhost:3000');
-        res.setHeader('Content-Type','application/json');
-        res.writeHead(404);
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
+        res.writeHead(404,header);
         res.end(JSON.stringify({'Message':'Path not found'}));
     }
 };
