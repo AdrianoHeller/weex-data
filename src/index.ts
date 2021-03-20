@@ -8,6 +8,7 @@ import { join } from 'path';
 import fs from 'fs';
 import { createHmac } from 'crypto';
 import { interpolateBirthDate } from './helpers';
+import { ObjectId } from 'mongodb';
 
 config({path:join(__dirname,'../.env')});
 
@@ -161,16 +162,17 @@ const serverRouter: IServerRouterProps = {
             parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
             delete parsedBody['HASHED_PASSWORD'];
             parsedBody['TOKEN'] = createToken(50); 
-            parsedBody['HORA_LOGIN'] = new Date().getTime();
+            parsedBody['HORA_LOGIN'] = new Date();
             const user = await cursor.collection('login').aggregate([
                 { $match:{
                     EMAIL: parsedBody['EMAIL'],
                     PASSWORD: parsedBody['PASSWORD']}
                 }]).toArray();
                 if(user.length > 0){
-                    delete parsedBody['PASSWORD'];
-                    delete parsedBody['_id'];
-                    console.log(parsedBody);               
+                    delete user[0]['PASSWORD'];
+                    delete user[0]['_id'];
+                    user[0]['TOKEN'] = parsedBody['TOKEN'];
+                    user[0]['HORA_LOGIN'] = parsedBody['HORA_LOGIN'];
                     res.writeHead(200,headers);
                     res.end(JSON.stringify(user[0]));
                 }else{
