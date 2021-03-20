@@ -7,12 +7,13 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import fs from 'fs';
 import { createHmac } from 'crypto';
+import { interpolateBirthDate } from './helpers';
 
 config({path:join(__dirname,'../.env')});
 
 interface IPayloadProps{
     path: string|any,
-    params: URLSearchParams,
+    params: string,
     method: string|undefined,
     headers: IncomingHttpHeaders,
     body: string,
@@ -24,7 +25,7 @@ interface IPayloadProps{
 const httpServer = http.createServer((req,res) => {
     const baseURL = `http://${req.headers.host}/`;
     const reqURL = new url.URL(req.url!,baseURL);
-    const {pathname,searchParams} = reqURL;
+    const {pathname,search} = reqURL;
     const { 
         method,
         headers } = req;
@@ -39,7 +40,7 @@ const httpServer = http.createServer((req,res) => {
 
         let payload: IPayloadProps = {
             path: filteredPath,
-            params: searchParams,
+            params: search,
             method,
             headers,
             body: buffer,
@@ -160,15 +161,18 @@ const serverRouter: IServerRouterProps = {
             parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
             delete parsedBody['HASHED_PASSWORD'];
             parsedBody['TOKEN'] = createToken(50); 
-            parsedBody['HORA_LOGIN'] = new Date().getUTCDate();
+            parsedBody['HORA_LOGIN'] = new Date().getTime();
             const user = await cursor.collection('login').aggregate([
                 { $match:{
-                    NOME_COMPLETO: parsedBody['NOME_COMPLETO'],
+                    EMAIL: parsedBody['EMAIL'],
                     PASSWORD: parsedBody['PASSWORD']}
                 }]).toArray();
                 if(user.length > 0){
+                    delete parsedBody['PASSWORD'];
+                    delete parsedBody['_id'];
+                    console.log(parsedBody);               
                     res.writeHead(200,headers);
-                    res.end(JSON.stringify(user));
+                    res.end(JSON.stringify(user[0]));
                 }else{
                     res.writeHead(500,headers);
                     res.end(JSON.stringify({'Message':'No user registered in database.'}));
@@ -292,15 +296,27 @@ const serverRouter: IServerRouterProps = {
                 if(parsedBody['NOME_COMPLETO'] && parsedBody['EMAIL'] && parsedBody['EMPRESA'] && parsedBody['CARGO'] && 
                 parsedBody['PASSWORD'] && parsedBody['ENDERECO'] && parsedBody['COMPLEMENTO'] && parsedBody['NUMERO'] && 
                 parsedBody['BAIRRO'] && parsedBody['CEP'] && parsedBody['CIDADE'] && parsedBody['SEXO']){
-                    // if(parsedBody){
                     try{
                         parsedBody['HASHED_PASSWORD'] = hashData(parsedBody['PASSWORD']);
                         delete parsedBody['PASSWORD'];
                         parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
                         delete parsedBody['HASHED_PASSWORD'];
-                        parsedBody['HORA_LOGIN'] = new Date();                
+                        parsedBody['DATA_NASCIMENTO'] = new Date(interpolateBirthDate(parsedBody['DATA_NASCIMENTO']));
+                        parsedBody['DATA_LOGIN'] = new Date();
+                        parsedBody['EMPRESA'] = parsedBody['EMPRESA'].toLowerCase();                
                         const data = await cursor.collection(parsedBody['EMPRESA'].toLowerCase()).insertOne(parsedBody);
-                        console.log(parsedBody);
+                        const logInfo = await cursor.collection('login').insertOne({
+                            USER_ID: parsedBody['_id'],
+                            NOME_COMPLETO: parsedBody['NOME_COMPLETO'],
+                            EMAIL: parsedBody['EMAIL'],
+                            PASSWORD: parsedBody['PASSWORD'],
+                            EMPRESA: parsedBody['EMPRESA'],
+                            CARGO: parsedBody['CARGO'],
+                            TOKEN:'',
+                            IS_LOGGED: false,
+                            LAST_LOGIN: ''
+                        });
+                        console.log(logInfo);
                         res.writeHead(200,header);
                         res.end(JSON.stringify(data));                                         
                     }catch(err){
