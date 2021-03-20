@@ -9,12 +9,13 @@ import fs from 'fs';
 import { createHmac } from 'crypto';
 import { interpolateBirthDate } from './helpers';
 import { ObjectId } from 'mongodb';
+import { parse } from 'querystring';
 
 config({path:join(__dirname,'../.env')});
 
 interface IPayloadProps{
     path: string|any,
-    params: string,
+    params: URLSearchParams,
     method: string|undefined,
     headers: IncomingHttpHeaders,
     body: string,
@@ -26,7 +27,7 @@ interface IPayloadProps{
 const httpServer = http.createServer((req,res) => {
     const baseURL = `http://${req.headers.host}/`;
     const reqURL = new url.URL(req.url!,baseURL);
-    const {pathname,search} = reqURL;
+    const { pathname,searchParams } = reqURL;
     const { 
         method,
         headers } = req;
@@ -41,7 +42,7 @@ const httpServer = http.createServer((req,res) => {
 
         let payload: IPayloadProps = {
             path: filteredPath,
-            params: search,
+            params: searchParams,
             method,
             headers,
             body: buffer,
@@ -209,7 +210,41 @@ const serverRouter: IServerRouterProps = {
             res.writeHead(405,headers);
             res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         };
-    },   
+    }, 
+    'usuarios/technoizz': async(payload,res):Promise<any> => {
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
+        const cursor = await connection.db();
+        const {
+            method,
+            headers,
+            params,
+            body,
+            bodyParser} = payload;
+            if(method === 'GET'){
+                console.log(params); 
+                try{
+                    const data = await cursor.collection('technoizz').aggregate([]).toArray()
+                    res.writeHead(200,header);
+                    res.end(JSON.stringify(data));
+                }catch(err){
+                    res.writeHead(500,header);
+                    res.end();    
+                }               
+            }else{
+                res.writeHead(405,header);
+                res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            }   
+    },  
     'usuarios/weagle': async(payload,res):Promise<any> => {
         const header = {
             'Access-Control-Allow-Origin':'*',
@@ -321,6 +356,66 @@ const serverRouter: IServerRouterProps = {
                         console.log(logInfo);
                         res.writeHead(200,header);
                         res.end(JSON.stringify(data));                                         
+                    }catch(err){
+                        res.writeHead(500,header);
+                        res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
+                    }
+                }else{
+                    res.writeHead(400,header);
+                    res.end(JSON.stringify({'Message':'Missing Fields.'}));    
+                }                      
+            }else{
+                res.writeHead(405,header);
+                res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            }   
+    },
+    'registrar-grupo': async(payload,res):Promise<any> => {
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
+        const cursor = await connection.db();
+        const {
+            method,
+            headers,
+            body,
+            hashData,
+            bodyParser} = payload;
+            let parsedBody = bodyParser(body);
+            if(method === 'POST'){
+                if(typeof parsedBody === 'object' && parsedBody instanceof Array){
+                    try{
+                        parsedBody.forEach(async item => {
+                            item['HASHED_PASSWORD'] = hashData(item['PASSWORD']);
+                            delete item['PASSWORD'];
+                            item['PASSWORD'] = item['HASHED_PASSWORD'];
+                            delete item['HASHED_PASSWORD'];
+                            if(item['DATA_NASCIMENTO']) item['DATA_NASCIMENTO'] = new Date(interpolateBirthDate(item['DATA_NASCIMENTO']));
+                            item['DATA_LOGIN'] = new Date();
+                            item['EMPRESA'] = item['EMPRESA'].toLowerCase();                
+                            const data = await cursor.collection(item['EMPRESA'].toLowerCase()).insertOne(item);
+                            const logInfo = await cursor.collection('login').insertOne({
+                                USER_ID: item['_id'],
+                                NOME_COMPLETO: item['NOME_COMPLETO'],
+                                EMAIL: item['EMAIL'],
+                                PASSWORD: item['PASSWORD'],
+                                EMPRESA: item['EMPRESA'],
+                                CARGO: item['CARGO'],
+                                TOKEN:'',
+                                IS_LOGGED: false,
+                                LAST_LOGIN: ''
+                            });
+                            console.log(logInfo);
+                        })                       
+                        res.writeHead(200,header);
+                        res.end(JSON.stringify({'Message':'User data inserted!'}));                                         
                     }catch(err){
                         res.writeHead(500,header);
                         res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
