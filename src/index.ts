@@ -201,9 +201,18 @@ const serverRouter: IServerRouterProps = {
             method,
             body,
             bodyParser } = payload;
-        const cursor = await connection;
+        const cursor = await connection.db();
         let parsedBody = bodyParser(body);        
         if(['POST'].includes(payload.method!)){
+            const user = await cursor.collection('login').findOne({_id: new ObjectId(parsedBody['USER_ID'])})
+                if(Object.keys(user).length > 0){
+                   const logout = await cursor.collection('login').updateOne({_id: new ObjectId(user['_id'])},{$set:{TOKEN:"",IS_LOGGED:false}});
+                   res.writeHead(200,headers);
+                   res.end(JSON.stringify(logout));         
+                }else{
+                    res.writeHead(500,headers);
+                    res.end(JSON.stringify({'Message':'User not found.'}));
+                }    
             res.writeHead(200,headers);
             res.end(JSON.stringify({'Message':'Server Running.'}));
         }else{
@@ -227,11 +236,9 @@ const serverRouter: IServerRouterProps = {
         const {
             method,
             headers,
-            params,
             body,
             bodyParser} = payload;
             if(method === 'GET'){
-                console.log(params); 
                 try{
                     const data = await cursor.collection('technoizz').aggregate([]).toArray()
                     res.writeHead(200,header);
@@ -338,7 +345,7 @@ const serverRouter: IServerRouterProps = {
                         delete parsedBody['PASSWORD'];
                         parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
                         delete parsedBody['HASHED_PASSWORD'];
-                        parsedBody['DATA_NASCIMENTO'] = new Date(interpolateBirthDate(parsedBody['DATA_NASCIMENTO']));
+                        if(parsedBody['DATA_NASCIMENTO']) parsedBody['DATA_NASCIMENTO'] = new Date(interpolateBirthDate(parsedBody['DATA_NASCIMENTO']));
                         parsedBody['DATA_LOGIN'] = new Date();
                         parsedBody['EMPRESA'] = parsedBody['EMPRESA'].toLowerCase();                
                         const data = await cursor.collection(parsedBody['EMPRESA'].toLowerCase()).insertOne(parsedBody);
