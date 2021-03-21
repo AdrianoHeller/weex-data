@@ -203,7 +203,7 @@ const serverRouter: IServerRouterProps = {
             bodyParser } = payload;
         const cursor = await connection.db();
         let parsedBody = bodyParser(body);        
-        if(['POST'].includes(payload.method!)){
+        if(['POST'].includes(method!)){
             const user = await cursor.collection('login').findOne({_id: new ObjectId(parsedBody['USER_ID'])})
                 if(Object.keys(user).length > 0){
                    const logout = await cursor.collection('login').updateOne({_id: new ObjectId(user['_id'])},{$set:{TOKEN:"",IS_LOGGED:false}});
@@ -400,27 +400,89 @@ const serverRouter: IServerRouterProps = {
                 if(typeof parsedBody === 'object' && parsedBody instanceof Array){
                     try{
                         parsedBody.forEach(async item => {
-                            item['HASHED_PASSWORD'] = hashData(item['PASSWORD']);
-                            delete item['PASSWORD'];
-                            item['PASSWORD'] = item['HASHED_PASSWORD'];
-                            delete item['HASHED_PASSWORD'];
-                            if(item['DATA_NASCIMENTO']) item['DATA_NASCIMENTO'] = new Date(interpolateBirthDate(item['DATA_NASCIMENTO']));
-                            item['DATA_LOGIN'] = new Date();
-                            item['EMPRESA'] = item['EMPRESA'].toLowerCase();                
-                            const data = await cursor.collection(item['EMPRESA'].toLowerCase()).insertOne(item);
-                            const logInfo = await cursor.collection('login').insertOne({
-                                USER_ID: item['_id'],
-                                NOME_COMPLETO: item['NOME_COMPLETO'],
-                                EMAIL: item['EMAIL'],
-                                PASSWORD: item['PASSWORD'],
-                                EMPRESA: item['EMPRESA'],
-                                CARGO: item['CARGO'],
-                                TOKEN:'',
-                                IS_LOGGED: false,
-                                LAST_LOGIN: ''
-                            });
-                            console.log(logInfo);
-                        })                       
+                                if(item['PASSWORD']){
+                                    item['HASHED_PASSWORD'] = hashData(item['PASSWORD']);
+                                    delete item['PASSWORD'];
+                                    item['PASSWORD'] = item['HASHED_PASSWORD'];
+                                    delete item['HASHED_PASSWORD'];
+                                    if(item['DATA_INICIO']) item['DATA_INICIO'] = new Date(item['DATA_INICIO']);
+                                    if(item['DATA_NASCIMENTO']) item['DATA_NASCIMENTO'] = new Date(item['DATA_NASCIMENTO']);
+                                    item['DATA_LOGIN'] = new Date();
+                                        if(item['EMPRESA']){
+                                            item['EMPRESA'] = item['EMPRESA'].toLowerCase();                
+                                            const data = await cursor.collection(item['EMPRESA'].toLowerCase()).insertOne(item);
+                                            const logInfo = await cursor.collection('login').insertOne({
+                                                USER_ID: item['_id'],
+                                                NOME_COMPLETO: item['NOME_COMPLETO'],
+                                                EMAIL: item['EMAIL'],
+                                                PASSWORD: item['PASSWORD'],
+                                                TIPO_USUARIO: 'B2B',
+                                                EMPRESA: item['EMPRESA'],
+                                                CARGO: item['CARGO'],
+                                                TOKEN:'',
+                                                IS_LOGGED: false,
+                                                LAST_LOGIN: ''
+                                            });
+                                            console.log(logInfo);
+                                        }else{
+                                            if(item['DATA_INICIO']){
+                                                item['DATA_INICIO'] = new Date(item['DATA_INICIO']);
+                                            }else{
+                                                item['DATA_INICIO'] = new Date();
+                                            }                                            
+                                            const data = await cursor.collection('b2b').insertOne(item);
+                                            const logInfo = await cursor.collection('login').insertOne({
+                                                USER_ID: item['_id'],
+                                                NOME_COMPLETO: item['NOME_COMPLETO'],
+                                                EMAIL: item['EMAIL'],
+                                                PASSWORD: item['PASSWORD'],
+                                                TIPO_USUARIO: 'B2C',
+                                                TOKEN:'',
+                                                IS_LOGGED: false,
+                                                LAST_LOGIN: ''
+                                            });
+                                            console.log(logInfo);
+                                        };
+                                }else{
+                                    item['PASSWORD'] = item['NOME_COMPLETO'].split(' ')[0].toLowerCase();
+                                    item['HASHED_PASSWORD'] = hashData(item['PASSWORD']);
+                                    delete item['PASSWORD'];
+                                    item['PASSWORD'] = item['HASHED_PASSWORD'];
+                                    delete item['HASHED_PASSWORD'];
+                                    if(item['DATA_NASCIMENTO']) item['DATA_NASCIMENTO'] = new Date(item['DATA_NASCIMENTO']);
+                                    item['DATA_LOGIN'] = new Date();
+                                        if(item['EMPRESA'] !== null){
+                                            item['EMPRESA'] = item['EMPRESA'].toLowerCase();                
+                                            const data = await cursor.collection(item['EMPRESA'].toLowerCase()).insertOne(item);
+                                            const logInfo = await cursor.collection('login').insertOne({
+                                                USER_ID: item['_id'],
+                                                NOME_COMPLETO: item['NOME_COMPLETO'],
+                                                EMAIL: item['EMAIL'],
+                                                PASSWORD: item['PASSWORD'],
+                                                TIPO_USUARIO: 'B2B',
+                                                EMPRESA: item['EMPRESA'],
+                                                CARGO: item['CARGO'],
+                                                TOKEN:'',
+                                                IS_LOGGED: false,
+                                                LAST_LOGIN: ''
+                                            });
+                                            console.log(logInfo);
+                                        }else{
+                                            const data = await cursor.collection('b2b').insertOne(item);
+                                            const logInfo = await cursor.collection('login').insertOne({
+                                                USER_ID: item['_id'],
+                                                NOME_COMPLETO: item['NOME_COMPLETO'],
+                                                EMAIL: item['EMAIL'],
+                                                PASSWORD: item['PASSWORD'],
+                                                TIPO_USUARIO: 'B2C',
+                                                TOKEN:'',
+                                                IS_LOGGED: false,
+                                                LAST_LOGIN: ''
+                                            });
+                                            console.log(logInfo);
+                                        }
+                                    }
+                                });                           
                         res.writeHead(200,header);
                         res.end(JSON.stringify({'Message':'User data inserted!'}));                                         
                     }catch(err){
