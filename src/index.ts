@@ -451,7 +451,7 @@ const serverRouter: IServerRouterProps = {
                                     delete item['HASHED_PASSWORD'];
                                     if(item['DATA_NASCIMENTO']) item['DATA_NASCIMENTO'] = new Date(item['DATA_NASCIMENTO']);
                                     item['DATA_LOGIN'] = new Date();
-                                        if(item['EMPRESA'] !== null){
+                                        if(item['EMPRESA']){
                                             item['EMPRESA'] = item['EMPRESA'].toLowerCase();                
                                             const data = await cursor.collection(item['EMPRESA'].toLowerCase()).insertOne(item);
                                             const logInfo = await cursor.collection('login').insertOne({
@@ -468,7 +468,9 @@ const serverRouter: IServerRouterProps = {
                                             });
                                             console.log(logInfo);
                                         }else{
-                                            const data = await cursor.collection('b2b').insertOne(item);
+                                            item['EMPRESA'] = '';
+                                            delete item['EMPRESA'];
+                                            const data = await cursor.collection('b2c').insertOne(item);
                                             const logInfo = await cursor.collection('login').insertOne({
                                                 USER_ID: item['_id'],
                                                 NOME_COMPLETO: item['NOME_COMPLETO'],
