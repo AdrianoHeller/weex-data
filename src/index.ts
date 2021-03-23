@@ -106,16 +106,17 @@ interface IServerRouterProps{
 };
 
 
-interface IDbDataAuthProps{
+interface IUserLoginProps{
+    USER_ID: string,
     NOME_COMPLETO: string,
     EMAIL: string,
     PASSWORD: string,
     EMPRESA: string,
     CARGO: string,
-    DATA_REGISTRO?: Date,
-    TOKEN?: string,
-    LOGADO?: boolean,
-    HORA_LOGIN?: Date
+    TIPO_USUARIO: string,
+    IS_LOGGED: boolean,
+    TOKEN: string,
+    LAST_LOGIN: Date
 };
 
 
@@ -163,19 +164,25 @@ const serverRouter: IServerRouterProps = {
             parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
             delete parsedBody['HASHED_PASSWORD'];
             parsedBody['TOKEN'] = createToken(50); 
-            parsedBody['HORA_LOGIN'] = new Date();
             const user = await cursor.collection('login').aggregate([
                 { $match:{
                     EMAIL: parsedBody['EMAIL'],
                     PASSWORD: parsedBody['PASSWORD']}
                 }]).toArray();
-                if(user.length > 0){
-                    delete user[0]['PASSWORD'];
-                    delete user[0]['_id'];
-                    user[0]['TOKEN'] = parsedBody['TOKEN'];
-                    user[0]['HORA_LOGIN'] = parsedBody['HORA_LOGIN'];
+                if(user.length > 0){                    
+                    await cursor.collection('login').updateOne({
+                        'USER_ID': user[0]['USER_ID']
+                    },{
+                        $set:{
+                            TOKEN: parsedBody['TOKEN'],
+                            IS_LOGGED: true
+                        }
+                    });
+                    const loggedUser = await cursor.collection('login').findOne({'USER_ID':user[0]['USER_ID']});
+                    delete loggedUser['PASSWORD'];
+                    delete loggedUser['_id'];
                     res.writeHead(200,headers);
-                    res.end(JSON.stringify(user[0]));
+                    res.end(JSON.stringify(loggedUser));
                 }else{
                     res.writeHead(500,headers);
                     res.end(JSON.stringify({'Message':'No user registered in database.'}));
@@ -204,11 +211,26 @@ const serverRouter: IServerRouterProps = {
         const cursor = await connection.db();
         let parsedBody = bodyParser(body);        
         if(['POST'].includes(method!)){
-            const user = await cursor.collection('login').findOne({_id: new ObjectId(parsedBody['USER_ID'])})
-                if(Object.keys(user).length > 0){
-                   const logout = await cursor.collection('login').updateOne({_id: new ObjectId(user['_id'])},{$set:{TOKEN:"",IS_LOGGED:false}});
+            const user:IUserLoginProps[] = await cursor.collection('login').aggregate([
+                { $match:
+                    { "USER_ID": new ObjectId(parsedBody['USER_ID']) }
+                }
+            ]).toArray();
+                if(user.length > 0){
+                   await cursor.collection('login').updateOne({
+                       "USER_ID": new ObjectId(user[0]['USER_ID'])
+                    },{
+                        $set:{
+                            TOKEN:"",
+                            IS_LOGGED:false,
+                            LAST_LOGIN: new Date()
+                        }
+                    });
+                   const loggedOutUser = await cursor.collection('login').findOne({"USER_ID": new ObjectId(user[0]['USER_ID'])});
+                   delete loggedOutUser['PASSWORD'];
+                   delete loggedOutUser['_id'];
                    res.writeHead(200,headers);
-                   res.end(JSON.stringify(logout));         
+                   res.end(JSON.stringify(loggedOutUser));         
                 }else{
                     res.writeHead(500,headers);
                     res.end(JSON.stringify({'Message':'User not found.'}));
@@ -219,6 +241,40 @@ const serverRouter: IServerRouterProps = {
             res.writeHead(405,headers);
             res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         };
+    },
+    'usuarios': async(payload,res):Promise<any> => {
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
+        const cursor = await connection.db();
+        const {
+            method,
+            params,
+            headers,
+            body,
+            bodyParser} = payload;
+            if(method === 'GET'){
+                try{
+                    let database = params.get('database');
+                    const data = await cursor.collection(database!).aggregate([]).toArray();
+                    res.writeHead(200,header);
+                    res.end(JSON.stringify(data));
+                }catch(err){
+                    res.writeHead(500,header);
+                    res.end();    
+                }               
+            }else{
+                res.writeHead(405,header);
+                res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            }   
     }, 
     'usuarios/technoizz': async(payload,res):Promise<any> => {
         const header = {
@@ -235,12 +291,14 @@ const serverRouter: IServerRouterProps = {
         const cursor = await connection.db();
         const {
             method,
+            params,
             headers,
             body,
             bodyParser} = payload;
             if(method === 'GET'){
                 try{
                     const data = await cursor.collection('technoizz').aggregate([]).toArray()
+                    console.log(params);
                     res.writeHead(200,header);
                     res.end(JSON.stringify(data));
                 }catch(err){
@@ -337,7 +395,7 @@ const serverRouter: IServerRouterProps = {
             bodyParser} = payload;
             let parsedBody = bodyParser(body);
             if(method === 'POST'){
-                if(parsedBody['NOME_COMPLETO'] && parsedBody['EMAIL'] && parsedBody['EMPRESA'] && parsedBody['CARGO'] && 
+                if(parsedBody['NOME_COMPLETO'] && parsedBody['EMAIL'] && parsedBody['CARGO'] && 
                 parsedBody['PASSWORD'] && parsedBody['ENDERECO'] && parsedBody['COMPLEMENTO'] && parsedBody['NUMERO'] && 
                 parsedBody['BAIRRO'] && parsedBody['CEP'] && parsedBody['CIDADE'] && parsedBody['SEXO']){
                     try{
@@ -347,7 +405,8 @@ const serverRouter: IServerRouterProps = {
                         delete parsedBody['HASHED_PASSWORD'];
                         if(parsedBody['DATA_NASCIMENTO']) parsedBody['DATA_NASCIMENTO'] = new Date(interpolateBirthDate(parsedBody['DATA_NASCIMENTO']));
                         parsedBody['DATA_LOGIN'] = new Date();
-                        parsedBody['EMPRESA'] = parsedBody['EMPRESA'].toLowerCase();                
+                        parsedBody['EMPRESA'] = parsedBody['EMPRESA'].toLowerCase();
+                        parsedBody['TIPO_USUARIO'] = parsedBody['EMPRESA'] ? 'B2B' : 'B2C';                
                         const data = await cursor.collection(parsedBody['EMPRESA'].toLowerCase()).insertOne(parsedBody);
                         const logInfo = await cursor.collection('login').insertOne({
                             USER_ID: parsedBody['_id'],
@@ -356,6 +415,7 @@ const serverRouter: IServerRouterProps = {
                             PASSWORD: parsedBody['PASSWORD'],
                             EMPRESA: parsedBody['EMPRESA'],
                             CARGO: parsedBody['CARGO'],
+                            TIPO_USUARIO: parsedBody['TIPO_USUARIO'],
                             TOKEN:'',
                             IS_LOGGED: false,
                             LAST_LOGIN: ''
@@ -495,6 +555,46 @@ const serverRouter: IServerRouterProps = {
                     res.writeHead(400,header);
                     res.end(JSON.stringify({'Message':'Missing Fields.'}));    
                 }                      
+            }else{
+                res.writeHead(405,header);
+                res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            }   
+    },
+    'usuarios/remover': async(payload,res):Promise<any> => {
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
+        const cursor = await connection.db();
+        const {
+            method,
+            headers,
+            body,
+            bodyParser} = payload;
+            let parsedBody = bodyParser(body);
+            if(method === 'POST'){
+                if(parsedBody['EMPRESA'] && parsedBody['USER_ID']){
+                    try{
+                        const data = await cursor.collection(parsedBody['EMPRESA']).deleteOne({
+                            'USER_ID': parsedBody['USER_ID']
+                        });
+                        res.writeHead(200,header);
+                        res.end(JSON.stringify(data));
+                    }catch(err){
+                        res.writeHead(500,header);
+                        res.end(JSON.stringify({'Message':'Internal Server Error.'}));    
+                    }
+                }else{
+                    res.writeHead(400,header);
+                    res.end(JSON.stringify({'Message':'Missing Required Fields.'}));
+                }                               
             }else{
                 res.writeHead(405,header);
                 res.end(JSON.stringify({'Message':'Method not Allowed.'}));
