@@ -1,4 +1,5 @@
-import http, { IncomingHttpHeaders, ServerResponse } from 'http';
+import http, { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http';
+import https from 'https';
 import connection from './db';
 import url from 'url';
 import { StringDecoder } from 'string_decoder';
@@ -34,7 +35,20 @@ const getUserData = () => {
     return userData;
 };
 
-const httpServer = http.createServer((req,res) => {
+const httpServer = http.createServer((req:IncomingMessage,res:ServerResponse) => {
+   uniqueServer(req,res);
+});
+
+interface ICertProps{
+    key?: string,
+    cert?: string
+};
+
+const httpsServer = https.createServer(config,(req:IncomingMessage,res:ServerResponse) => {
+    uniqueServer(req,res);
+});
+
+const uniqueServer = (req,res) => {
     const baseURL = `http://${req.headers.host}/`;
     const reqURL = new url.URL(req.url!,baseURL);
     const { pathname,searchParams } = reqURL;
@@ -96,7 +110,7 @@ const httpServer = http.createServer((req,res) => {
         };  
 
     });
-});
+};
 
 
 interface ICallbackProps{
