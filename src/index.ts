@@ -11,6 +11,10 @@ import { interpolateBirthDate } from './helpers';
 import { ObjectId } from 'mongodb';
 import os from 'os';
 import { stringify } from 'querystring';
+const cert = {
+    key: fs.readFileSync(join(__dirname,'../cert/server.key')),
+    cert: fs.readFileSync(join(__dirname,'../cert/server.cert'))
+}
 
 config({ path:join(__dirname,'../.env') });
 
@@ -44,11 +48,11 @@ interface ICertProps{
     cert?: string
 };
 
-const httpsServer = https.createServer(config,(req:IncomingMessage,res:ServerResponse) => {
+const httpsServer = https.createServer(cert,(req:IncomingMessage,res:ServerResponse) => {
     uniqueServer(req,res);
 });
 
-const uniqueServer = (req,res) => {
+const uniqueServer = (req:IncomingMessage,res:ServerResponse) => {
     const baseURL = `http://${req.headers.host}/`;
     const reqURL = new url.URL(req.url!,baseURL);
     const { pathname,searchParams } = reqURL;
@@ -121,7 +125,13 @@ const httpCallback: ICallbackProps = (err):void => {
     !err ? console.log(`Server listening on ${process.env.HTTP_PORT}`) : console.error(err);
 };
 
+const httpsCallback: ICallbackProps = (err):void => {
+    !err ? console.log(`Server listening on ${process.env.HTTPS_PORT}`) : console.error(err);
+};
+
 httpServer.listen(process.env.HTTP_PORT, httpCallback);
+
+httpsServer.listen(process.env.HTTPS_PORT,httpsCallback);
 
 interface IServerRouterProps{
     'ping': (payload: IPayloadProps, res: ServerResponse) => void,
