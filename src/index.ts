@@ -1,5 +1,4 @@
 import http, { IncomingHttpHeaders, ServerResponse } from 'http';
-import https from 'https';
 import connection from './db';
 import url from 'url';
 import { StringDecoder } from 'string_decoder';
@@ -9,9 +8,10 @@ import fs from 'fs';
 import { createHmac } from 'crypto';
 import { interpolateBirthDate } from './helpers';
 import { ObjectId } from 'mongodb';
-import { parse } from 'querystring';
+import os from 'os';
+import { stringify } from 'querystring';
 
-config({path:join(__dirname,'../.env')});
+config({ path:join(__dirname,'../.env') });
 
 interface IPayloadProps{
     path: string|any,
@@ -22,6 +22,16 @@ interface IPayloadProps{
     bodyParser: Function,
     hashData: Function,
     createToken: Function
+};
+
+const getUserData = () => {
+    const userData = { 
+        HOST: os.hostname(),
+        HOST_INFO: os.userInfo(),
+        HOSTNET: os.networkInterfaces(),
+        TEST: os.arch()
+    };
+    return userData;
 };
 
 const httpServer = http.createServer((req,res) => {
@@ -134,8 +144,15 @@ const serverRouter: IServerRouterProps = {
             return;
         };
         if(['GET'].includes(payload.method!)){
+            const { HOST,HOSTNET,HOST_INFO,TEST } = getUserData();
+            const userData = {
+                HOST,
+                HOSTNET,
+                HOST_INFO,
+                TEST
+            }                
             res.writeHead(200);
-            res.end(JSON.stringify({'Message':'Server Running'}));
+            res.end(JSON.stringify(userData));
         };
     },
     'login': async(payload,res) => {
@@ -275,7 +292,43 @@ const serverRouter: IServerRouterProps = {
                 res.writeHead(405,header);
                 res.end(JSON.stringify({'Message':'Method not Allowed.'}));
             }   
-    }, 
+    },
+    'usuarios/update': async(payload,res):Promise<any> => {
+        const header = {
+            'Access-Control-Allow-Origin':'*',
+            'Access-Control-Allow-Methods':'POST,OPTIONS',
+            'Access-Control-Max-Age': 2592000,
+            'Content-Type':'application/json'
+        };
+        if(payload.method === 'OPTIONS'){
+            res.writeHead(204,header);
+            res.end();
+            return;
+        };
+        const cursor = await connection.db();
+        const {
+            method,
+            params,
+            headers,
+            body,
+            bodyParser} = payload;
+            let parsedBody = bodyParser(body);
+                if(method === 'POST'){
+                    let USER_ID = params.get('USER_ID');
+                    let EMPRESA = params.get('EMPRESA');
+                    const data = await cursor.collection(EMPRESA!).replaceOne({'USER_ID': USER_ID},{ $set: parsedBody },{upsert:true});
+                        try{
+                            res.writeHead(200,header);
+                            res.end(JSON.stringify(data));
+                        }catch(err){
+                            res.writeHead(500,header);
+                            res.end(JSON.stringify(err));    
+                        }               
+                }else{
+                    res.writeHead(405,header);
+                    res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+                }   
+    },
     'usuarios/technoizz': async(payload,res):Promise<any> => {
         const header = {
             'Access-Control-Allow-Origin':'*',
@@ -425,7 +478,7 @@ const serverRouter: IServerRouterProps = {
                         res.end(JSON.stringify(data));                                         
                     }catch(err){
                         res.writeHead(500,header);
-                        res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
+                        res.end(JSON.stringify(err));    
                     }
                 }else{
                     res.writeHead(400,header);
@@ -490,7 +543,7 @@ const serverRouter: IServerRouterProps = {
                                             }else{
                                                 item['DATA_INICIO'] = new Date();
                                             }                                            
-                                            const data = await cursor.collection('b2b').insertOne(item);
+                                            const data = await cursor.collection('b2c').insertOne(item);
                                             const logInfo = await cursor.collection('login').insertOne({
                                                 USER_ID: item['_id'],
                                                 NOME_COMPLETO: item['NOME_COMPLETO'],
