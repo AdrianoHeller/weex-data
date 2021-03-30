@@ -9,7 +9,13 @@ services:
       - "3001:3001"
       - "5001:5001"
     restart: always
-volumes:
-  weex:        
+  web:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+        
+
+
 
 

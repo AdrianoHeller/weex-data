@@ -20,17 +20,19 @@ ENTRYPOINT [ "/sbin/tini","--" ]
 CMD ["node","build/index.js"]
 
 # Dev Stage
-FROM prod as dev
+# FROM prod as dev
 
-ENV NODE_ENV=development
+# ENV NODE_ENV=development
 
-RUN npm install --only=development
+# RUN npm install --only=development
 
-CMD ["./node_modules/nodemon/bin/nodemon.js","./build/index.js"]
+# CMD ["./node_modules/nodemon/bin/nodemon.js","./build/index.js"]
 
 # Reverse Proxy
 FROM nginx:1.19.8-alpine
 
 COPY nginx.conf /etc/nginx/nginx.conf
+
+CMD ["nginx","-g","daemon off;"]
 
 

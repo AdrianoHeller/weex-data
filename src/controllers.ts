@@ -4,6 +4,7 @@ import {
 } from 'http';
 import os from 'os';
 import { MongoClient,ObjectId } from 'mongodb';
+import { interpolateBirthDate } from './helpers';
 
 interface IPayloadProps{
     path: string|any,
@@ -186,7 +187,7 @@ weexControllers['logout'] = async(connection,payload,res) => {
         res.end(JSON.stringify({'Message':'Method not Allowed.'}));
     };
 },
-weexControllers['usuarios'] = async(payload,res):Promise<any> => {
+weexControllers['usuarios'] = async(connection,payload,res):Promise<any> => {
     const header = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
@@ -220,7 +221,7 @@ weexControllers['usuarios'] = async(payload,res):Promise<any> => {
             res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }   
 },
-weexControllers['usuarios/update'] = async(payload,res):Promise<any> => {
+weexControllers['usuarios/update'] = async(connection,payload,res):Promise<any> => {
     const header = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
@@ -256,7 +257,7 @@ weexControllers['usuarios/update'] = async(payload,res):Promise<any> => {
                 res.end(JSON.stringify({'Message':'Method not Allowed.'}));
             }   
 },
-weexControllers['usuarios/technoizz'] = async(payload,res):Promise<any> => {
+weexControllers['usuarios/technoizz'] = async(connection,payload,res):Promise<any> => {
     const header = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
@@ -290,7 +291,7 @@ weexControllers['usuarios/technoizz'] = async(payload,res):Promise<any> => {
             res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }   
 },  
-weexControllers['usuarios/weagle'] = async(payload,res):Promise<any> => {
+weexControllers['usuarios/weagle'] = async(connection,payload,res):Promise<any> => {
     const header = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
@@ -322,7 +323,7 @@ weexControllers['usuarios/weagle'] = async(payload,res):Promise<any> => {
             res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }   
 },
-weexControllers['usuarios/welcome'] = async(payload,res):Promise<any> => {
+weexControllers['usuarios/welcome'] = async(connection,payload,res):Promise<any> => {
     const header = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
@@ -354,7 +355,7 @@ weexControllers['usuarios/welcome'] = async(payload,res):Promise<any> => {
             res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }   
 },
-weexControllers['registrar'] = async(payload,res):Promise<any> => {
+weexControllers['registrar'] = async(connection,payload,res):Promise<any> => {
     const header = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
@@ -416,7 +417,7 @@ weexControllers['registrar'] = async(payload,res):Promise<any> => {
             res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }   
 },
-weexControllers['registrar-grupo'] = async(payload,res):Promise<any> => {
+weexControllers['registrar-grupo'] = async(connection,payload,res):Promise<any> => {
     const header = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
@@ -540,7 +541,7 @@ weexControllers['registrar-grupo'] = async(payload,res):Promise<any> => {
             res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }   
 },
-weexControllers['usuarios/remover'] = async(payload,res):Promise<any> => {
+weexControllers['usuarios/remover'] = async(connection,payload,res):Promise<any> => {
     const header = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
