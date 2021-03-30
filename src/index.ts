@@ -5,12 +5,8 @@ import url from 'url';
 import { StringDecoder } from 'string_decoder';
 import { config } from 'dotenv';
 import { join } from 'path';
-import fs from 'fs';
 import { createHmac } from 'crypto';
-const cert = {
-    key: fs.readFileSync(join(__dirname,'../cert/server.key')),
-    cert: fs.readFileSync(join(__dirname,'../cert/server.cert'))
-}
+
 import { weexControllers } from './controllers';
 
 config({ path:join(__dirname,'../.env') });
@@ -34,10 +30,6 @@ interface ICertProps{
     key?: string,
     cert?: string
 };
-
-const httpsServer = https.createServer(cert,(req:IncomingMessage,res:ServerResponse) => {
-    uniqueServer(req,res);
-});
 
 const uniqueServer = (req:IncomingMessage,res:ServerResponse) => {
     const baseURL = `http://${req.headers.host}/`;
@@ -112,13 +104,7 @@ const httpCallback: ICallbackProps = (err):void => {
     !err ? console.log(`Server listening on ${process.env.HTTP_PORT}`) : console.error(err);
 };
 
-const httpsCallback: ICallbackProps = (err):void => {
-    !err ? console.log(`Server listening on ${process.env.HTTPS_PORT}`) : console.error(err);
-};
-
 httpServer.listen(process.env.HTTP_PORT, httpCallback);
-
-httpsServer.listen(process.env.HTTPS_PORT,httpsCallback);
 
 interface IServerRouterProps{
     'ping': (payload: IPayloadProps, res: ServerResponse) => void,
