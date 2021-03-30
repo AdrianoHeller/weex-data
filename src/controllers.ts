@@ -27,12 +27,20 @@ const getUserData = () => {
 };
 
 interface IWeexControllers{
-    ping: (payload:IPayloadProps,res:ServerResponse)=>void,
-    usuarios:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    notFound:(payload:IPayloadProps,res:ServerResponse)=>void
+    'ping': (payload:IPayloadProps,res:ServerResponse) => void,
+    'login':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'logout':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'registrar':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'registrar-varios':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/technoizz':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/update':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/welcome':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/weagle':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'notFound':(payload:IPayloadProps,res:ServerResponse) => void
 };
 
-let weexControllers:IWeexControllers = {};
+export let weexControllers: IWeexControllers = {};
 
 
 weexControllers['ping'] =  (payload,res) => {
