@@ -91,12 +91,12 @@ const uniqueServer = (req:IncomingMessage,res:ServerResponse) => {
             }
         };
 
-        switch(Object.keys(serverRouter).includes(filteredPath)){
+        switch(Object.keys(weexRouter).includes(filteredPath)){
             case true:
-                serverRouter[filteredPath](payload,res);
+                weexRouter[filteredPath](payload,res);
                 break;
             default:    
-                serverRouter['notFound'](payload,res);
+                weexRouter['notFound'](payload,res);
                 break;
         };  
 
@@ -126,10 +126,7 @@ interface IServerRouterProps{
     'notFound': (payload: IPayloadProps, res: ServerResponse) => void,
 };
 
-
-
-
-const serverRouter: IServerRouterProps = {
+const weexRouter: IServerRouterProps = {
     'ping': weexControllers.ping!,
     'login': weexControllers.login!.bind(null,connection),
     'logout': weexControllers.logout!.bind(null,connection),
@@ -141,5 +138,5 @@ const serverRouter: IServerRouterProps = {
     'registrar': weexControllers['registrar']!.bind(null,connection),
     'registrar-grupo':weexControllers['registrar-grupo']!.bind(null,connection),
     'usuarios/remover':weexControllers['usuarios/remover']!.bind(null,connection),
-    'notFound': 
+    'notFound': weexControllers['notFound']!
 };
