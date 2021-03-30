@@ -1,6 +1,35 @@
+import { 
+    IncomingHttpHeaders,
+    ServerResponse
+} from 'http';
+import os from 'os';
+import { MongoClient } from 'mongodb';
+
+interface IPayloadProps{
+    path: string|any,
+    params: URLSearchParams,
+    method: string|undefined,
+    headers: IncomingHttpHeaders,
+    body: string,
+    bodyParser: Function,
+    hashData: Function,
+    createToken: Function
+};
+
+const getUserData = () => {
+    const userData = { 
+        HOST: os.hostname(),
+        HOST_INFO: os.userInfo(),
+        HOSTNET: os.networkInterfaces(),
+        TEST: os.arch()
+    };
+    return userData;
+};
 
 interface IWeexControllers{
-    [key:string]:(payload,res) => void
+    ping: (payload:IPayloadProps,res:ServerResponse)=>void,
+    usuarios:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    notFound:(payload:IPayloadProps,res:ServerResponse)=>void
 };
 
 let weexControllers:IWeexControllers = {};
