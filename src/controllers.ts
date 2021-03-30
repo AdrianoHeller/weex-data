@@ -16,6 +16,20 @@ interface IPayloadProps{
     createToken: Function
 };
 
+
+interface IUserLoginProps{
+    USER_ID: string,
+    NOME_COMPLETO: string,
+    EMAIL: string,
+    PASSWORD: string,
+    EMPRESA: string,
+    CARGO: string,
+    TIPO_USUARIO: string,
+    IS_LOGGED: boolean,
+    TOKEN: string,
+    LAST_LOGIN: Date
+};
+
 const getUserData = () => {
     const userData = { 
         HOST: os.hostname(),

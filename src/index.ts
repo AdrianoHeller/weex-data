@@ -7,10 +7,6 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import fs from 'fs';
 import { createHmac } from 'crypto';
-import { interpolateBirthDate } from './helpers';
-import { ObjectId } from 'mongodb';
-import os from 'os';
-import { stringify } from 'querystring';
 const cert = {
     key: fs.readFileSync(join(__dirname,'../cert/server.key')),
     cert: fs.readFileSync(join(__dirname,'../cert/server.cert'))
@@ -19,7 +15,7 @@ import { weexControllers } from './controllers';
 
 config({ path:join(__dirname,'../.env') });
 
-interface IPayloadProps{
+export interface IPayloadProps{
     path: string|any,
     params: URLSearchParams,
     method: string|undefined,
@@ -28,16 +24,6 @@ interface IPayloadProps{
     bodyParser: Function,
     hashData: Function,
     createToken: Function
-};
-
-const getUserData = () => {
-    const userData = { 
-        HOST: os.hostname(),
-        HOST_INFO: os.userInfo(),
-        HOSTNET: os.networkInterfaces(),
-        TEST: os.arch()
-    };
-    return userData;
 };
 
 const httpServer = http.createServer((req:IncomingMessage,res:ServerResponse) => {
@@ -141,18 +127,6 @@ interface IServerRouterProps{
 };
 
 
-interface IUserLoginProps{
-    USER_ID: string,
-    NOME_COMPLETO: string,
-    EMAIL: string,
-    PASSWORD: string,
-    EMPRESA: string,
-    CARGO: string,
-    TIPO_USUARIO: string,
-    IS_LOGGED: boolean,
-    TOKEN: string,
-    LAST_LOGIN: Date
-};
 
 
 const serverRouter: IServerRouterProps = {
