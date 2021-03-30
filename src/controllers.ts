@@ -3,7 +3,7 @@ import {
     ServerResponse
 } from 'http';
 import os from 'os';
-import { MongoClient } from 'mongodb';
+import { MongoClient,ObjectId } from 'mongodb';
 
 interface IPayloadProps{
     path: string|any,
@@ -27,17 +27,18 @@ const getUserData = () => {
 };
 
 interface IWeexControllers{
-    'ping': (payload:IPayloadProps,res:ServerResponse) => void,
-    'login':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'logout':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'registrar':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'registrar-varios':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'usuarios':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'usuarios/technoizz':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'usuarios/update':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'usuarios/welcome':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'usuarios/weagle':(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
-    'notFound':(payload:IPayloadProps,res:ServerResponse) => void
+    'ping'?: (payload:IPayloadProps,res:ServerResponse) => void,
+    'login'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'logout'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'registrar'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'registrar-grupo'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/remover'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/technoizz'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/update'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/welcome'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'usuarios/weagle'?:(connection: MongoClient, payload:IPayloadProps,res: ServerResponse) => Promise<void>
+    'notFound'?:(payload:IPayloadProps,res:ServerResponse) => void
 };
 
 export let weexControllers: IWeexControllers = {};
@@ -67,7 +68,7 @@ weexControllers['ping'] =  (payload,res) => {
         res.end(JSON.stringify(userData));
     };
 },
-weexControllers['login'] = async(payload,res) => {
+weexControllers['login'] = async(connection,payload,res) => {
     const headers = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
@@ -121,7 +122,7 @@ weexControllers['login'] = async(payload,res) => {
         res.end(JSON.stringify({'Message':'Method not Allowed.'}));
     }
 },
-weexControllers['logout'] = async(payload,res) => {
+weexControllers['logout'] = async(connection,payload,res) => {
     const headers = {
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Allow-Methods':'POST,OPTIONS',
