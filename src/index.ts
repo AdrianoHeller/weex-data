@@ -1,12 +1,10 @@
 import http, { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http';
-import https from 'https';
 import connection from './db';
 import url from 'url';
 import { StringDecoder } from 'string_decoder';
 import { config } from 'dotenv';
 import { join } from 'path';
 import { createHmac } from 'crypto';
-
 import { weexControllers } from './controllers';
 
 config({ path:join(__dirname,'../.env') });
@@ -88,7 +86,7 @@ const uniqueServer = (req:IncomingMessage,res:ServerResponse) => {
                 weexRouter[filteredPath](payload,res);
                 break;
             default:    
-                weexRouter['notFound'](payload,res);
+                weexRouter['/server/notFound'](payload,res);
                 break;
         };  
 
@@ -107,22 +105,22 @@ const httpCallback: ICallbackProps = (err):void => {
 httpServer.listen(process.env.HTTP_PORT, httpCallback);
 
 interface IServerRouterProps{
-    'ping': (payload: IPayloadProps, res: ServerResponse) => void,
+    '/server/ping': (payload: IPayloadProps, res: ServerResponse) => void,
     [filteredPath:string]: (payload: IPayloadProps,res: ServerResponse) => void,
-    'notFound': (payload: IPayloadProps, res: ServerResponse) => void,
+    '/server/notFound': (payload: IPayloadProps, res: ServerResponse) => void,
 };
 
 const weexRouter: IServerRouterProps = {
-    'ping': weexControllers.ping!,
-    'login': weexControllers.login!.bind(null,connection),
-    'logout': weexControllers.logout!.bind(null,connection),
-    'usuarios': weexControllers.usuarios!.bind(null,connection),
-    'usuarios/update': weexControllers['usuarios/update']!.bind(null,connection),
-    'usuarios/technoizz':weexControllers['usuarios/technoizz']!.bind(null,connection),  
-    'usuarios/weagle': weexControllers['usuarios/weagle']!.bind(null,connection),
-    'usuarios/welcome':weexControllers['usuarios/welcome']!.bind(null,connection),
-    'registrar': weexControllers['registrar']!.bind(null,connection),
-    'registrar-grupo':weexControllers['registrar-grupo']!.bind(null,connection),
-    'usuarios/remover':weexControllers['usuarios/remover']!.bind(null,connection),
-    'notFound': weexControllers['notFound']!
+    '/server/ping': weexControllers['/server/ping']!,
+    '/server/login': weexControllers['/server/login']!.bind(null,connection),
+    '/server/logout': weexControllers['/server/logout']!.bind(null,connection),
+    '/server/usuarios': weexControllers['/server/usuarios']!.bind(null,connection),
+    '/server/usuarios/update': weexControllers['/server/usuarios/update']!.bind(null,connection),
+    '/server/usuarios/technoizz':weexControllers['/server/usuarios/technoizz']!.bind(null,connection),  
+    '/server/usuarios/weagle': weexControllers['/server/usuarios/weagle']!.bind(null,connection),
+    '/server/usuarios/welcome':weexControllers['/server/usuarios/welcome']!.bind(null,connection),
+    '/server/registrar': weexControllers['/server/registrar']!.bind(null,connection),
+    '/server/registrar-grupo':weexControllers['/server/registrar-grupo']!.bind(null,connection),
+    '/server/usuarios/remover':weexControllers['/server/usuarios/remover']!.bind(null,connection),
+    '/server/notFound': weexControllers['/server/notFound']!
 };
