@@ -1,0 +1,19 @@
+FROM node:12.20.2-alpine3.12
+
+ENV NODE_ENV=production
+
+EXPOSE 5001
+
+RUN apk add --no-cache tini
+
+WORKDIR /src/app
+
+COPY package*.json ./
+
+RUN npm install --only=production && npm cache clean --force
+
+COPY . ./
+
+ENTRYPOINT ["/sbin/tini","--"]
+
+CMD ["node","build/index.js"]
