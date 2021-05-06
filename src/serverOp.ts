@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import db from './db';
-import os from 'os';
 import { ObjectId } from 'mongodb';
 import { createHmac } from 'crypto';
 
@@ -39,17 +38,6 @@ interface IUserLoginProps{
     TOKEN: string,
     LAST_LOGIN: Date
 };
-
-const getUserData = () => {
-    const userData = { 
-        HOST: os.hostname(),
-        HOST_INFO: os.userInfo(),
-        HOSTNET: os.networkInterfaces(),
-        TEST: os.arch()
-    };
-    return userData;
-};
-
 
 const PORT = Number(process.env.PORT) | 5001;
 
@@ -105,10 +93,9 @@ app.post('/login',async(req,res): Promise<any> => {
                     const loggedUser = await cursor.collection('login').findOne({'USER_ID':user[0]['USER_ID']});
                     delete loggedUser['PASSWORD'];
                     delete loggedUser['_id'];
-                    res.sendStatus(200);
                     res.send(JSON.stringify(loggedUser));
                 }else{
-                    res.sendStatus(500);
+                    // res.sendStatus(500);
                     res.send(JSON.stringify({'Message':'No user registered in database.'}));
                 }
         }else{
@@ -151,6 +138,62 @@ app.post('/logout',async(req,res): Promise<any> => {
         res.send(JSON.stringify({'Message':'Method not Allowed.'}));
     };
 });
+
+app.get('/usuarios/:empresa',async(req,res) => {
+    const empresa = req.params.empresa;
+    const cursor = await db.db();
+        if(req.method === 'GET'){
+            try{
+                const data = await cursor.collection(empresa).aggregate([]).toArray();
+                res.send(JSON.stringify(data));
+            }catch(err){
+                res.send(err);    
+            }               
+        }else{
+            res.sendStatus(405);
+            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+        }
+});
+
+app.get('/usuarios/:empresa/:id',async(req,res) => {
+    const empresa = req.params.empresa;
+    const id = req.params.id;
+    const data: IUserLoginProps = req.body;
+    const cursor = await db.db();
+        if(req.method === 'GET'){
+            try{
+                const data = await cursor.collection(empresa).findOne({id: new ObjectId(id)});
+                res.send(JSON.stringify(data));
+            }catch(err){
+                res.send(err);    
+            }               
+        }else{
+            res.sendStatus(405);
+            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+        }
+});
+
+app.put('/usuarios/:empresa/:id',async(req,res) => {
+    const empresa = req.params.empresa;
+    const id = req.params.id;
+    const payload: IUserLoginProps = req.body;
+    const cursor = await db.db();
+        if(req.method === 'GET'){
+            try{
+                const data = await cursor.collection(empresa).findOneAndReplace(
+                    {id: new ObjectId(id)},
+                    {$set:{ payload }}
+                    );
+                res.send(JSON.stringify(data));
+            }catch(err){
+                res.send(err);    
+            }               
+        }else{
+            res.sendStatus(405);
+            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+        }
+});
+
 
 app.listen(PORT,HOST);
 

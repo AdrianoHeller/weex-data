@@ -102,7 +102,7 @@ const httpCallback: ICallbackProps = (err):void => {
     !err ? console.log(`Server listening on ${process.env.HTTP_PORT}`) : console.error(err);
 };
 
-httpServer.listen(process.env.HTTP_PORT, httpCallback);
+// httpServer.listen(process.env.HTTP_PORT, httpCallback);
 
 interface IServerRouterProps{
     'ping': (payload: IPayloadProps, res: ServerResponse) => void,

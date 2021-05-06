@@ -57,7 +57,7 @@ interface IWeexControllers{
 
 export let weexControllers: IWeexControllers = {};
 
-const allowedOrigins = ['http://127.0.0.1','http://vkm','http://0.0.0.0','http://localhost:3000'];
+const allowedOrigins = ['http://127.0.0.1','http://vkm','http://0.0.0.0','http://localhost'];
 
 const checkOrigin = (origin: string|undefined,allowedOrigins: string[]) => {
     if(allowedOrigins.includes(origin!)){
