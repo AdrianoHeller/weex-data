@@ -17,7 +17,6 @@ interface IPayloadProps{
     createToken: Function
 };
 
-
 interface IUserLoginProps{
     USER_ID: string,
     NOME_COMPLETO: string,
@@ -58,10 +57,20 @@ interface IWeexControllers{
 
 export let weexControllers: IWeexControllers = {};
 
+const allowedOrigins = ['http://127.0.0.1','http://vkm','http://0.0.0.0','http://localhost:3000'];
 
-weexControllers['ping'] =  (payload,res) => {
+const checkOrigin = (origin: string|undefined,allowedOrigins: string[]) => {
+    if(allowedOrigins.includes(origin!)){
+        return origin;
+    }else{
+        return false;
+    };
+};
+
+
+weexControllers['ping'] = (payload,res) => {
     const headers = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.referer,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'GET,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -84,26 +93,28 @@ weexControllers['ping'] =  (payload,res) => {
     };
 },
 weexControllers['login'] = async(connection,payload,res) => {
-    const headers = {
-        'Access-Control-Allow-Origin':'*',
+    const headerData = {
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.referer,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
-        'Content-Type':'application/json'
+        'Content-Type':['application/json','text/plain','*/*']
     };
     if(payload.method === 'OPTIONS'){
-        res.writeHead(204,headers);
+        res.writeHead(204,headerData);
         res.end();
         return;
     };
     const {
         method,
+        headers,
         body,
         bodyParser,
         createToken,
         hashData } = payload;
+         
     const cursor = await connection.db();
     let parsedBody = bodyParser(body);        
-    if(method === 'POST'){
+    // if(method === 'POST'){    
         parsedBody['HASHED_PASSWORD'] = hashData(parsedBody['PASSWORD']);
         delete parsedBody['PASSWORD'];
         parsedBody['PASSWORD'] = parsedBody['HASHED_PASSWORD'];
@@ -126,20 +137,21 @@ weexControllers['login'] = async(connection,payload,res) => {
                 const loggedUser = await cursor.collection('login').findOne({'USER_ID':user[0]['USER_ID']});
                 delete loggedUser['PASSWORD'];
                 delete loggedUser['_id'];
-                res.writeHead(200,headers);
+                // res.setHeader('Access-Control-Allow-Origin','*');
+                res.writeHead(200,headerData);
                 res.end(JSON.stringify(loggedUser));
             }else{
-                res.writeHead(500,headers);
+                res.writeHead(500,headerData);
                 res.end(JSON.stringify({'Message':'No user registered in database.'}));
             }
-    }else{
-        res.writeHead(405,headers);
-        res.end(JSON.stringify({'Message':'Method not Allowed.'}));
-    }
+    // }else{
+    //     res.writeHead(405,headerData);
+    //     res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+    // }
 },
 weexControllers['logout'] = async(connection,payload,res) => {
     const headers = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -189,7 +201,7 @@ weexControllers['logout'] = async(connection,payload,res) => {
 },
 weexControllers['usuarios'] = async(connection,payload,res):Promise<any> => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -206,6 +218,7 @@ weexControllers['usuarios'] = async(connection,payload,res):Promise<any> => {
         headers,
         body,
         bodyParser} = payload;
+        
         if(method === 'GET'){
             try{
                 let database = params.get('database');
@@ -223,7 +236,7 @@ weexControllers['usuarios'] = async(connection,payload,res):Promise<any> => {
 },
 weexControllers['usuarios/update'] = async(connection,payload,res):Promise<any> => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -259,7 +272,7 @@ weexControllers['usuarios/update'] = async(connection,payload,res):Promise<any> 
 },
 weexControllers['usuarios/technoizz'] = async(connection,payload,res):Promise<any> => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -293,7 +306,7 @@ weexControllers['usuarios/technoizz'] = async(connection,payload,res):Promise<an
 },  
 weexControllers['usuarios/weagle'] = async(connection,payload,res):Promise<any> => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -325,7 +338,7 @@ weexControllers['usuarios/weagle'] = async(connection,payload,res):Promise<any> 
 },
 weexControllers['usuarios/welcome'] = async(connection,payload,res):Promise<any> => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -357,7 +370,7 @@ weexControllers['usuarios/welcome'] = async(connection,payload,res):Promise<any>
 },
 weexControllers['registrar'] = async(connection,payload,res):Promise<any> => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -419,7 +432,7 @@ weexControllers['registrar'] = async(connection,payload,res):Promise<any> => {
 },
 weexControllers['registrar-grupo'] = async(connection,payload,res):Promise<any> => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -543,7 +556,7 @@ weexControllers['registrar-grupo'] = async(connection,payload,res):Promise<any> 
 },
 weexControllers['usuarios/remover'] = async(connection,payload,res):Promise<any> => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
@@ -583,7 +596,7 @@ weexControllers['usuarios/remover'] = async(connection,payload,res):Promise<any>
 },
 weexControllers['notFound'] = (payload,res) => {
     const header = {
-        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Origin':`${checkOrigin(payload.headers.origin,allowedOrigins)}`,
         'Access-Control-Allow-Methods':'POST,OPTIONS',
         'Access-Control-Max-Age': 2592000,
         'Content-Type':'application/json'
