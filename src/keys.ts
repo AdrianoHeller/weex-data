@@ -12,7 +12,7 @@ interface IEnvProps{
     MONGO_DB_NAME?: string
 };
 
-const environmentValues:IEnvProps = {
+export const environmentValues:IEnvProps = {
     HASH_SCRT: process.env.HASH_SCRT!,
     PORT: Number(process.env.PORT),
     SERVER_URL: process.env.SERVER_URL!,
