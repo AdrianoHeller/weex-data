@@ -4,6 +4,15 @@ import { join } from 'path';
 config({path: join(__dirname,'../.env')});
 
 
+interface IEnvProps{
+    SERVER_URL: string,
+    PORT: number,
+    HASH_SCRT: string,
+    MONGO_USER: string,
+    MONGO_PWD: string,
+    MONGO_DB_NAME: string
+};
+
 export const checkActualRunningEnvironment = () => {
     if(!process.env.NODE_ENV){
         return process.env.NODE_ENV = 'development';
@@ -11,3 +20,5 @@ export const checkActualRunningEnvironment = () => {
         return process.env.NODE_ENV;
     }
 };
+
+
