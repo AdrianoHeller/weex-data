@@ -183,6 +183,113 @@ app.post('/usuarios/registrar', async(req,res): Promise<any> => {
         }      
 });
 
+app.post('/usuarios/registrar-grupo', async(req,res): Promise<any> => {
+    const cursor = await db.db();
+        if(req.method === 'POST'){
+            if(typeof req.body === 'object' && req.body instanceof Array){
+                try{
+                    req.body.forEach(async item => {
+                            if(item['PASSWORD']){
+                                item['HASHED_PASSWORD'] = hashData(item['PASSWORD']);
+                                delete item['PASSWORD'];
+                                item['PASSWORD'] = item['HASHED_PASSWORD'];
+                                delete item['HASHED_PASSWORD'];
+                                if(item['DATA_INICIO']) item['DATA_INICIO'] = new Date(item['DATA_INICIO']);
+                                if(item['DATA_NASCIMENTO']) item['DATA_NASCIMENTO'] = new Date(item['DATA_NASCIMENTO']);
+                                item['DATA_LOGIN'] = new Date();
+                                    if(item['EMPRESA']){
+                                        item['EMPRESA'] = item['EMPRESA'].toLowerCase();                
+                                        const data = await cursor.collection(item['EMPRESA'].toLowerCase()).insertOne(item);
+                                        const logInfo = await cursor.collection('login').insertOne({
+                                            USER_ID: item['_id'],
+                                            NOME_COMPLETO: item['NOME_COMPLETO'],
+                                            EMAIL: item['EMAIL'],
+                                            PASSWORD: item['PASSWORD'],
+                                            TIPO_USUARIO: 'B2B',
+                                            EMPRESA: item['EMPRESA'],
+                                            CARGO: item['CARGO'],
+                                            TOKEN:'',
+                                            IS_LOGGED: false,
+                                            LAST_LOGIN: ''
+                                        });
+                                        console.log(logInfo);
+                                    }else{
+                                        if(item['DATA_INICIO']){
+                                            item['DATA_INICIO'] = new Date(item['DATA_INICIO']);
+                                        }else{
+                                            item['DATA_INICIO'] = new Date();
+                                        }                                            
+                                        const data = await cursor.collection('b2c').insertOne(item);
+                                        const logInfo = await cursor.collection('login').insertOne({
+                                            USER_ID: item['_id'],
+                                            NOME_COMPLETO: item['NOME_COMPLETO'],
+                                            EMAIL: item['EMAIL'],
+                                            PASSWORD: item['PASSWORD'],
+                                            TIPO_USUARIO: 'B2C',
+                                            TOKEN:'',
+                                            IS_LOGGED: false,
+                                            LAST_LOGIN: ''
+                                        });
+                                        console.log(logInfo);
+                                    };
+                            }else{
+                                item['PASSWORD'] = item['NOME_COMPLETO'].split(' ')[0].toLowerCase();
+                                item['HASHED_PASSWORD'] = hashData(item['PASSWORD']);
+                                delete item['PASSWORD'];
+                                item['PASSWORD'] = item['HASHED_PASSWORD'];
+                                delete item['HASHED_PASSWORD'];
+                                if(item['DATA_NASCIMENTO']) item['DATA_NASCIMENTO'] = new Date(item['DATA_NASCIMENTO']);
+                                item['DATA_LOGIN'] = new Date();
+                                    if(item['EMPRESA']){
+                                        item['EMPRESA'] = item['EMPRESA'].toLowerCase();                
+                                        const data = await cursor.collection(item['EMPRESA'].toLowerCase()).insertOne(item);
+                                        const logInfo = await cursor.collection('login').insertOne({
+                                            USER_ID: item['_id'],
+                                            NOME_COMPLETO: item['NOME_COMPLETO'],
+                                            EMAIL: item['EMAIL'],
+                                            PASSWORD: item['PASSWORD'],
+                                            TIPO_USUARIO: 'B2B',
+                                            EMPRESA: item['EMPRESA'],
+                                            CARGO: item['CARGO'],
+                                            TOKEN:'',
+                                            IS_LOGGED: false,
+                                            LAST_LOGIN: ''
+                                        });
+                                        console.log(logInfo);
+                                    }else{
+                                        item['EMPRESA'] = '';
+                                        delete item['EMPRESA'];
+                                        const data = await cursor.collection('b2c').insertOne(item);
+                                        const logInfo = await cursor.collection('login').insertOne({
+                                            USER_ID: item['_id'],
+                                            NOME_COMPLETO: item['NOME_COMPLETO'],
+                                            EMAIL: item['EMAIL'],
+                                            PASSWORD: item['PASSWORD'],
+                                            TIPO_USUARIO: 'B2C',
+                                            TOKEN:'',
+                                            IS_LOGGED: false,
+                                            LAST_LOGIN: ''
+                                        });
+                                        console.log(logInfo);
+                                    }
+                                }
+                            });                           
+                    res.sendStatus(200);
+                    res.end(JSON.stringify({'Message':'User data inserted!'}));                                         
+                }catch(err){
+                    res.sendStatus(500);
+                    res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
+                }
+            }else{
+                res.sendStatus(400);
+                res.end(JSON.stringify({'Message':'Missing Fields.'}));    
+            }                      
+        }else{
+            res.sendStatus(405);
+            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+        }
+});
+
 app.get('/usuarios/:empresa',async(req,res) => {
     const empresa = req.params.empresa;
     const cursor = await db.db();
