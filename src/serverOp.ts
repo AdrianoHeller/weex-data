@@ -95,7 +95,6 @@ app.post('/login',async(req,res): Promise<any> => {
                     delete loggedUser['_id'];
                     res.send(JSON.stringify(loggedUser));
                 }else{
-                    // res.sendStatus(500);
                     res.send(JSON.stringify({'Message':'No user registered in database.'}));
                 }
         }else{
@@ -137,6 +136,51 @@ app.post('/logout',async(req,res): Promise<any> => {
         res.sendStatus(405);
         res.send(JSON.stringify({'Message':'Method not Allowed.'}));
     };
+});
+
+app.post('/usuarios/registrar', async(req,res): Promise<any> => {
+    const cursor = await db.db();
+        if(req.method === 'POST'){
+            if(req.body['NOME_COMPLETO'] && req.body['EMAIL'] && req.body['CARGO'] && 
+            req.body['PASSWORD'] && req.body['ENDERECO'] && req.body['COMPLEMENTO'] && req.body['NUMERO'] && 
+            req.body['BAIRRO'] && req.body['CEP'] && req.body['CIDADE'] && req.body['SEXO']){
+                try{
+                    req.body['HASHED_PASSWORD'] = hashData(req.body['PASSWORD']);
+                    delete req.body['PASSWORD'];
+                    req.body['PASSWORD'] = req.body['HASHED_PASSWORD'];
+                    delete req.body['HASHED_PASSWORD'];
+                    if(req.body['DATA_NASCIMENTO']) req.body['DATA_NASCIMENTO'] = new Date(interpolateBirthDate(req.body['DATA_NASCIMENTO']));
+                    req.body['DATA_LOGIN'] = new Date();
+                    req.body['EMPRESA'] = req.body['EMPRESA'].toLowerCase();
+                    req.body['TIPO_USUARIO'] = req.body['EMPRESA'] ? 'B2B' : 'B2C';                
+                    const data = await cursor.collection(req.body['EMPRESA'].toLowerCase()).insertOne(req.body);
+                    const logInfo = await cursor.collection('login').insertOne({
+                        USER_ID: req.body['_id'],
+                        NOME_COMPLETO: req.body['NOME_COMPLETO'],
+                        EMAIL: req.body['EMAIL'],
+                        PASSWORD: req.body['PASSWORD'],
+                        EMPRESA: req.body['EMPRESA'],
+                        CARGO: req.body['CARGO'],
+                        TIPO_USUARIO: req.body['TIPO_USUARIO'],
+                        TOKEN:'',
+                        IS_LOGGED: false,
+                        LAST_LOGIN: ''
+                    });
+                    console.log(logInfo);
+                    res.sendStatus(200);
+                    res.end(JSON.stringify(data));                                         
+                }catch(err){
+                    res.sendStatus(500);
+                    res.end(JSON.stringify(err));    
+                }
+            }else{
+                res.sendStatus(400);
+                res.end(JSON.stringify({'Message':'Missing Fields.'}));    
+            }                      
+        }else{
+            res.sendStatus(405);
+            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+        }      
 });
 
 app.get('/usuarios/:empresa',async(req,res) => {
