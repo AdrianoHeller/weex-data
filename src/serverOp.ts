@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import db from './db';
 import { ObjectId } from 'mongodb';
 import { createHmac } from 'crypto';
+import { interpolateBirthDate } from './helpers';
 
 const hashData = (targetData:string): string => {
     if(targetData.length > 0){
