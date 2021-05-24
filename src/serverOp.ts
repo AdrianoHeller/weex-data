@@ -69,7 +69,7 @@ app.get('/',(req,res) => {
     }    
 });
 
-app.post('/login',async(req,res): Promise<any> => {
+app.post('/apiweex/login',async(req,res): Promise<any> => {
     const cursor = await db.db();
         if(req.method === 'POST'){
         req.body['HASHED_PASSWORD'] = hashData(req.body['PASSWORD']);
@@ -104,7 +104,7 @@ app.post('/login',async(req,res): Promise<any> => {
         }
 });
 
-app.post('/logout',async(req,res): Promise<any> => {
+app.post('/apiweex/logout',async(req,res): Promise<any> => {
     const cursor = await db.db();
     if(['POST'].includes(req.method)){
         const user:IUserLoginProps[] = await cursor.collection('login').aggregate([
@@ -139,7 +139,7 @@ app.post('/logout',async(req,res): Promise<any> => {
     };
 });
 
-app.post('/usuarios/registrar', async(req,res): Promise<any> => {
+app.post('/apiweex/usuarios/registrar', async(req,res): Promise<any> => {
     const cursor = await db.db();
         if(req.method === 'POST'){
             if(req.body['NOME_COMPLETO'] && req.body['EMAIL'] && req.body['CARGO'] && 
@@ -184,7 +184,7 @@ app.post('/usuarios/registrar', async(req,res): Promise<any> => {
         }      
 });
 
-app.post('/usuarios/registrar-grupo', async(req,res): Promise<any> => {
+app.post('/apiweex/usuarios/registrar-grupo', async(req,res): Promise<any> => {
     const cursor = await db.db();
         if(req.method === 'POST'){
             if(typeof req.body === 'object' && req.body instanceof Array){
@@ -291,7 +291,7 @@ app.post('/usuarios/registrar-grupo', async(req,res): Promise<any> => {
         }
 });
 
-app.get('/usuarios/:empresa',async(req,res) => {
+app.get('/apiweex/usuarios/:empresa',async(req,res) => {
     const empresa = req.params.empresa;
     const cursor = await db.db();
         if(req.method === 'GET'){
@@ -307,7 +307,7 @@ app.get('/usuarios/:empresa',async(req,res) => {
         }
 });
 
-app.get('/usuarios/:empresa/:id',async(req,res) => {
+app.get('/apiweex/usuarios/:empresa/:id',async(req,res) => {
     const empresa = req.params.empresa;
     const id = req.params.id;
     const data: IUserLoginProps = req.body;
@@ -325,7 +325,7 @@ app.get('/usuarios/:empresa/:id',async(req,res) => {
         }
 });
 
-app.put('/usuarios/:empresa/:id',async(req,res) => {
+app.put('/apiweex/usuarios/:empresa/:id',async(req,res) => {
     const empresa = req.params.empresa;
     const id = req.params.id;
     const payload: IUserLoginProps = req.body;
