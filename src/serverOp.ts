@@ -62,10 +62,10 @@ app.disable('x-powered-by');
 
 app.get('/',(req,res) => {
     if(['GET','get'].includes(req.method)){
-        res.send('Server Running');
+        return res.send('Server Running');
     }else{
         res.sendStatus(405);
-        res.end();
+        return res.end();
     }    
 });
 
@@ -94,13 +94,13 @@ app.post('/apiweex/login',async(req,res): Promise<any> => {
                     const loggedUser = await cursor.collection('login').findOne({'USER_ID':user[0]['USER_ID']});
                     delete loggedUser['PASSWORD'];
                     delete loggedUser['_id'];
-                    res.send(JSON.stringify(loggedUser));
+                    return res.send(JSON.stringify(loggedUser));
                 }else{
-                    res.send(JSON.stringify({'Message':'No user registered in database.'}));
+                    return res.send(JSON.stringify({'Message':'No user registered in database.'}));
                 }
         }else{
             res.sendStatus(405);
-            res.end();
+            return res.end();
         }
 });
 
@@ -126,16 +126,14 @@ app.post('/apiweex/logout',async(req,res): Promise<any> => {
                delete loggedOutUser['PASSWORD'];
                delete loggedOutUser['_id'];
                res.sendStatus(200);
-               res.end(JSON.stringify(loggedOutUser));         
+               return res.end(JSON.stringify(loggedOutUser));         
             }else{
                 res.sendStatus(500);
-                res.send(JSON.stringify({'Message':'User not found.'}));
-            }    
-        res.sendStatus(200);
-        res.send(JSON.stringify({'Message':'Server Running.'}));
+                return res.end(JSON.stringify({'Message':'User not found.'}));
+            }      
     }else{
         res.sendStatus(405);
-        res.send(JSON.stringify({'Message':'Method not Allowed.'}));
+        return res.send(JSON.stringify({'Message':'Method not Allowed.'}));
     };
 });
 
@@ -169,18 +167,18 @@ app.post('/apiweex/usuarios/registrar', async(req,res): Promise<any> => {
                     });
                     console.log(logInfo);
                     res.sendStatus(200);
-                    res.end(JSON.stringify(data));                                         
+                    return res.end(JSON.stringify(data));                                         
                 }catch(err){
                     res.sendStatus(500);
-                    res.end(JSON.stringify(err));    
+                    return res.end(JSON.stringify(err));    
                 }
             }else{
                 res.sendStatus(400);
-                res.end(JSON.stringify({'Message':'Missing Fields.'}));    
+                return res.end(JSON.stringify({'Message':'Missing Fields.'}));    
             }                      
         }else{
             res.sendStatus(405);
-            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }      
 });
 
@@ -276,18 +274,18 @@ app.post('/apiweex/usuarios/registrar-grupo', async(req,res): Promise<any> => {
                                 }
                             });                           
                     res.sendStatus(200);
-                    res.end(JSON.stringify({'Message':'User data inserted!'}));                                         
+                    return res.end(JSON.stringify({'Message':'User data inserted!'}));                                         
                 }catch(err){
                     res.sendStatus(500);
-                    res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
+                    return res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
                 }
             }else{
                 res.sendStatus(400);
-                res.end(JSON.stringify({'Message':'Missing Fields.'}));    
+                return res.end(JSON.stringify({'Message':'Missing Fields.'}));    
             }                      
         }else{
             res.sendStatus(405);
-            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
 });
 
@@ -297,13 +295,13 @@ app.get('/apiweex/usuarios/:empresa',async(req,res) => {
         if(req.method === 'GET'){
             try{
                 const data = await cursor.collection(empresa).aggregate([]).toArray();
-                res.send(JSON.stringify(data));
+                return res.send(JSON.stringify(data));
             }catch(err){
-                res.send(err);    
+                return res.send(err);    
             }               
         }else{
             res.sendStatus(405);
-            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
 });
 
@@ -315,13 +313,13 @@ app.get('/apiweex/usuarios/:empresa/:id',async(req,res) => {
         if(req.method === 'GET'){
             try{
                 const data = await cursor.collection(empresa).findOne({id: new ObjectId(id)});
-                res.send(JSON.stringify(data));
+                return res.send(JSON.stringify(data));
             }catch(err){
-                res.send(err);    
+                return res.send(err);    
             }               
         }else{
             res.sendStatus(405);
-            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
 });
 
@@ -336,13 +334,13 @@ app.put('/apiweex/usuarios/:empresa/:id',async(req,res) => {
                     {id: new ObjectId(id)},
                     {$set:{ payload }}
                     );
-                res.send(JSON.stringify(data));
+                return res.send(JSON.stringify(data));
             }catch(err){
-                res.send(err);    
+                return res.send(err);    
             }               
         }else{
             res.sendStatus(405);
-            res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
 });
 
