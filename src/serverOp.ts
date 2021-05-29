@@ -94,9 +94,9 @@ app.post('/apiweex/login',async(req,res): Promise<any> => {
                     const loggedUser = await cursor.collection('login').findOne({'USER_ID':user[0]['USER_ID']});
                     delete loggedUser['PASSWORD'];
                     delete loggedUser['_id'];
-                    return res.send(JSON.stringify(loggedUser));
+                    res.send(JSON.stringify(loggedUser));
                 }else{
-                    return res.send(JSON.stringify({'Message':'No user registered in database.'}));
+                    res.send(JSON.stringify({'Message':'No user registered in database.'}));
                 }
         }else{
             res.sendStatus(405);
@@ -125,11 +125,10 @@ app.post('/apiweex/logout',async(req,res): Promise<any> => {
                const loggedOutUser = await cursor.collection('login').findOne({"USER_ID": new ObjectId(user[0]['USER_ID'])});
                delete loggedOutUser['PASSWORD'];
                delete loggedOutUser['_id'];
-               res.sendStatus(200);
-               return res.end(JSON.stringify(loggedOutUser));         
+               res.send(JSON.stringify(loggedOutUser));         
             }else{
                 res.sendStatus(500);
-                return res.end(JSON.stringify({'Message':'User not found.'}));
+                res.send(JSON.stringify({'Message':'User not found.'}));
             }      
     }else{
         res.sendStatus(405);
