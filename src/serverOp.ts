@@ -99,8 +99,8 @@ app.post('/apiweex/login',async(req,res): Promise<any> => {
                     res.send(JSON.stringify({'Message':'No user registered in database.'}));
                 }
         }else{
-            res.sendStatus(405);
-            return res.end();
+            // res.sendStatus(405);
+            return res.status(405).end();
         }
 });
 
@@ -127,12 +127,10 @@ app.post('/apiweex/logout',async(req,res): Promise<any> => {
                delete loggedOutUser['_id'];
                res.send(JSON.stringify(loggedOutUser));         
             }else{
-                res.sendStatus(500);
-                res.send(JSON.stringify({'Message':'User not found.'}));
+                res.status(500).send(JSON.stringify({'Message':'User not found.'}));
             }      
     }else{
-        res.sendStatus(405);
-        return res.send(JSON.stringify({'Message':'Method not Allowed.'}));
+        return res.status(405).send(JSON.stringify({'Message':'Method not Allowed.'}));
     };
 });
 
@@ -165,19 +163,15 @@ app.post('/apiweex/usuarios/registrar', async(req,res): Promise<any> => {
                         LAST_LOGIN: ''
                     });
                     console.log(logInfo);
-                    res.sendStatus(200);
-                    return res.end(JSON.stringify(data));                                         
+                    return res.status(200).end(JSON.stringify(data));                                         
                 }catch(err){
-                    res.sendStatus(500);
-                    return res.end(JSON.stringify(err));    
+                    return res.status(500).end(JSON.stringify(err));    
                 }
             }else{
-                res.sendStatus(400);
-                return res.end(JSON.stringify({'Message':'Missing Fields.'}));    
+                return res.status(400).end(JSON.stringify({'Message':'Missing Fields.'}));    
             }                      
         }else{
-            res.sendStatus(405);
-            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.status(405).end(JSON.stringify({'Message':'Method not Allowed.'}));
         }      
 });
 
@@ -274,19 +268,15 @@ app.post('/apiweex/usuarios/registrar-grupo', async(req,res): Promise<any> => {
                                     }
                                 }
                             });                           
-                    res.sendStatus(200);
-                    return res.end(JSON.stringify({'Message':'User data inserted!'}));                                         
+                    return res.status(200).end(JSON.stringify({'Message':'User data inserted!'}));                                         
                 }catch(err){
-                    res.sendStatus(500);
-                    return res.end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
+                    return res.status(500).end(JSON.stringify({'Message':'Usuário não registrado em nossa base. Por favor, efetue um registro!'}));    
                 }
             }else{
-                res.sendStatus(400);
-                return res.end(JSON.stringify({'Message':'Missing Fields.'}));    
+                return res.status(400).end(JSON.stringify({'Message':'Missing Fields.'}));    
             }                      
         }else{
-            res.sendStatus(405);
-            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.status(405).end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
 });
 
@@ -301,8 +291,7 @@ app.get('/apiweex/usuarios/:empresa',async(req,res) => {
                 return res.send(err);    
             }               
         }else{
-            res.sendStatus(405);
-            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.status(405).end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
 });
 
@@ -319,8 +308,7 @@ app.get('/apiweex/usuarios/:empresa/:id',async(req,res) => {
                 return res.send(err);    
             }               
         }else{
-            res.sendStatus(405);
-            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.status(405).end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
 });
 
@@ -340,8 +328,7 @@ app.put('/apiweex/usuarios/:empresa/:id',async(req,res) => {
                 return res.send(err);    
             }               
         }else{
-            res.sendStatus(405);
-            return res.end(JSON.stringify({'Message':'Method not Allowed.'}));
+            return res.status(405).end(JSON.stringify({'Message':'Method not Allowed.'}));
         }
 });
 
