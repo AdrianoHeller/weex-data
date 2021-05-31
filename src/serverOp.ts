@@ -181,6 +181,8 @@ app.post('/apiweex/usuarios/registrar', async(req,res): Promise<any> => {
         }      
 });
 
+
+
 app.post('/apiweex/usuarios/registrar-grupo', async(req,res): Promise<any> => {
     const cursor = await db.db();
         if(req.method === 'POST'){
@@ -344,6 +346,10 @@ app.put('/apiweex/usuarios/:empresa/:id',async(req,res) => {
 });
 
 
-app.listen(PORT,HOST);
+const server = app.listen(PORT,HOST);
+
+server.keepAliveTimeout = 61 * 1000;
+
+server.headersTimeout = 65 * 1000;
 
 
