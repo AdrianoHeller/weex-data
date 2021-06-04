@@ -96,7 +96,7 @@ app.post('/apiweex/login',async(req,res): Promise<any> => {
                     delete loggedUser['_id'];
                     res.send(JSON.stringify(loggedUser));
                 }else{
-                    res.send(JSON.stringify({'Message':'No user registered in database.'}));
+                    res.status(404).send(JSON.stringify({'Message':'No user registered in database.'}));
                 }
         }else{
             // res.sendStatus(405);
@@ -288,7 +288,7 @@ app.get('/apiweex/usuarios/:empresa',async(req,res) => {
                 const data = await cursor.collection(empresa).aggregate([]).toArray();
                 return res.send(JSON.stringify(data));
             }catch(err){
-                return res.send(err);    
+                return res.status(500).send(err);    
             }               
         }else{
             return res.status(405).end(JSON.stringify({'Message':'Method not Allowed.'}));
