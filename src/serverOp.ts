@@ -346,7 +346,7 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
         const data = await cursor
           .collection(empresa)
           .findOneAndDelete({ _id: new ObjectId(id) });
-        return res.status(204);
+        return res.status(204).send(JSON.stringify(data));
       } catch (err) {
         return res.send(err);
       }
