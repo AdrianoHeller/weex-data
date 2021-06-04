@@ -295,48 +295,71 @@ app.get('/apiweex/usuarios/:empresa',async(req,res) => {
         }
 });
 
-app.get('/apiweex/usuarios/:empresa/:id',async(req,res) => {
+app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
     const empresa = req.params.empresa;
     const id = req.params.id;
     const data: IUserLoginProps = req.body;
     const cursor = await db.db();
-        if(req.method === 'GET'){
-            try{
-                const data = await cursor.collection(empresa).findOne({id: new ObjectId(id)});
-                return res.send(JSON.stringify(data));
-            }catch(err){
-                return res.send(err);    
-            }               
-        }else{
-            return res.status(405).end(JSON.stringify({'Message':'Method not Allowed.'}));
-        }
-});
-
-app.put('/apiweex/usuarios/:empresa/:id',async(req,res) => {
+    if (req.method === "GET") {
+      try {
+        const data = await cursor
+          .collection(empresa)
+          .findOne({ id: new ObjectId(id) });
+        return res.send(JSON.stringify(data));
+      } catch (err) {
+        return res.send(err);
+      }
+    } else {
+      return res
+        .status(405)
+        .end(JSON.stringify({ Message: "Method not Allowed." }));
+    }
+  });
+  
+  app.put("/apiweex/usuarios/:empresa/:id", async (req, res) => {
     const empresa = req.params.empresa;
     const id = req.params.id;
     const payload: IUserLoginProps = req.body;
     const cursor = await db.db();
-        if(req.method === 'GET'){
-            try{
-                const data = await cursor.collection(empresa).findOneAndReplace(
-                    {id: new ObjectId(id)},
-                    {$set:{ payload }}
-                    );
-                return res.send(JSON.stringify(data));
-            }catch(err){
-                return res.send(err);    
-            }               
-        }else{
-            return res.status(405).end(JSON.stringify({'Message':'Method not Allowed.'}));
-        }
-});
-
-
-const server = app.listen(PORT,HOST);
-
-server.keepAliveTimeout = 61 * 1000;
-
-server.headersTimeout = 65 * 1000;
-
-
+    if (req.method === "PUT") {
+      try {
+        const data = await cursor
+          .collection(empresa)
+          .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: payload });
+        return res.send(JSON.stringify(data));
+      } catch (err) {
+        return res.send(err);
+      }
+    } else {
+      return res
+        .status(405)
+        .end(JSON.stringify({ Message: "Method not Allowed." }));
+    }
+  });
+  
+  app.delete("/apiweex/usuarios/:empresa/:id", async (req, res) => {
+    const empresa = req.params.empresa;
+    const id = req.params.id;
+    const cursor = await db.db();
+    if (req.method === "DELETE") {
+      try {
+        const data = await cursor
+          .collection(empresa)
+          .findOneAndDelete({ _id: new ObjectId(id) });
+        return res.status(204).send(JSON.stringify(data));
+      } catch (err) {
+        return res.send(err);
+      }
+    } else {
+      return res
+        .status(405)
+        .end(JSON.stringify({ Message: "Method not Allowed." }));
+    }
+  });
+  
+  const server = app.listen(PORT, HOST);
+  
+  server.keepAliveTimeout = 61 * 1000;
+  
+  server.headersTimeout = 65 * 1000;
+  
