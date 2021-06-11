@@ -337,6 +337,14 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
         const data = await cursor
           .collection(empresa)
           .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: payload });
+
+        await cursor.collection('login').updateOne({
+            'USER_ID': new ObjectId(id)
+        },{
+            $set:{
+                NOME_COMPLETO: payload.NOME_COMPLETO,
+            }
+        });
         return res.send(JSON.stringify(data));
       } catch (err) {
         return res.send(err);
