@@ -99,7 +99,6 @@ app.post('/apiweex/login',async(req,res): Promise<any> => {
                     res.status(404).send(JSON.stringify({'Message':'No user registered in database.'}));
                 }
         }else{
-            // res.sendStatus(405);
             return res.status(405).end();
         }
 });
@@ -184,21 +183,19 @@ app.post('/apiweex/usuarios/registrar', async(req,res): Promise<any> => {
 app.post('/apiweex/usuarios/registrar-grupo', async(req,res): Promise<any> => {
     const cursor = await db.db();
         if(req.method === 'POST'){
+            console.log('sou o teste: ', req.body)
             if(typeof req.body === 'object' && req.body instanceof Array){
                 try{
-                    req.body.forEach(async item => {
+                    req.body.forEach(async (item, index) => {
 
-                        // const checkUserAlreayExist = await cursor.collection('login').find({"EMAIL": req.body['EMAIL']}).toArray() 
+                        const checkUserAlreayExist = await cursor.collection('login').find({"EMAIL": req.body[index]['EMAIL']}).toArray() 
 
-                        // if (checkUserAlreayExist.length > 0){
-                        //     return
-                        // }
+                        if (checkUserAlreayExist.length > 0){
+                            return
+                        }
 
                         if(item['PASSWORD']){
-                            item['HASHED_PASSWORD'] = hashData(item['PASSWORD']);
-                            delete item['PASSWORD'];
-                            item['PASSWORD'] = item['HASHED_PASSWORD'];
-                            delete item['HASHED_PASSWORD'];
+                            item['PASSWORD'] = hashData(String(item['PASSWORD']));
                             if(item['DATA_INICIO']) item['DATA_INICIO'] = new Date(item['DATA_INICIO']);
                             if(item['DATA_NASCIMENTO']) item['DATA_NASCIMENTO'] = new Date(item['DATA_NASCIMENTO']);
                             item['DATA_LOGIN'] = new Date();
@@ -362,10 +359,12 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
     const cursor = await db.db();
     if (req.method === "DELETE") {
       try {
-        const data = await cursor
+        const companyData = await cursor
           .collection(empresa)
           .findOneAndDelete({ _id: new ObjectId(id) });
-        return res.status(204).send(JSON.stringify(data));
+
+        const loginData = await cursor.collection('login').findOneAndDelete({USER_ID: new ObjectId(id)});
+        return res.status(204).send(JSON.stringify({company_data: companyData, login_data: loginData}));
       } catch (err) {
         return res.send(err);
       }
