@@ -133,6 +133,21 @@ app.post('/apiweex/logout',async(req,res): Promise<any> => {
     };
 });
 
+interface IPayloadProps{
+    NOME_COMPLETO: string;
+    EMAIL: string;
+    CARGO: string;
+    PASSWORD: string;
+    ENDERECO: string;
+    COMPLEMENTO: string;
+    NUMERO: string;
+    BAIRRO: string;
+    CEP: string;
+    CIDADE: string;
+    SEXO: string;
+    EMPRESA:string
+};
+
 app.post('/apiweex/usuarios/registrar', async(req,res): Promise<any> => {
     const cursor = await db.db();
         if(req.method === 'POST'){
@@ -140,35 +155,46 @@ app.post('/apiweex/usuarios/registrar', async(req,res): Promise<any> => {
             req.body['PASSWORD'] && req.body['ENDERECO'] && req.body['COMPLEMENTO'] && req.body['NUMERO'] && 
             req.body['BAIRRO'] && req.body['CEP'] && req.body['CIDADE'] && req.body['SEXO']){
                 try{
-
-                    const checkEmailAlreadyExist = await cursor.collection('login').find({"EMAIL": req.body['EMAIL']}).toArray()
-
-                    if (checkEmailAlreadyExist.length > 0){
-                        return res.status(400).end(JSON.stringify({'Message':'Email already exist'}));
-                    }
-
-                    req.body['PASSWORD'] = hashData(req.body['PASSWORD']);
-                    if(req.body['DATA_NASCIMENTO']) req.body['DATA_NASCIMENTO'] = new Date(interpolateBirthDate(req.body['DATA_NASCIMENTO']));
-                    req.body['DATA_LOGIN'] = new Date();
-                    req.body['EMPRESA'] = req.body['EMPRESA'].toLowerCase();
-                    req.body['TIPO_USUARIO'] = req.body['EMPRESA'] ? 'B2B' : 'B2C';                
-                    const data = await cursor.collection(req.body['EMPRESA'].toLowerCase()).insertOne(req.body);
-                    const logInfo = await cursor.collection('login').insertOne({
-                        USER_ID: req.body['_id'],
-                        NOME_COMPLETO: req.body['NOME_COMPLETO'],
-                        EMAIL: req.body['EMAIL'],
-                        PASSWORD: req.body['PASSWORD'],
-                        EMPRESA: req.body['EMPRESA'],
-                        CARGO: req.body['CARGO'],
-                        TIPO_USUARIO: req.body['TIPO_USUARIO'],
-                        TOKEN:'',
-                        IS_LOGGED: false,
-                        LAST_LOGIN: ''
-                    });
-                    console.log(logInfo);
-                    return res.status(200).end(JSON.stringify(data));                                         
+                  const data = await cursor.collection('login').findOne({
+                      EMAIL: req.body['EMAIL']
+                  })
+                  if(data !== null){
+                    res.send(400).json({'Message': 'Usuario ja existente'})
+                  }else{
+                    req.body['EMPRESA'] = String(req.body['EMPRESA']).toLowerCase(); 
+                    req.body['hashedPassword'] = hashData(req.body['PASSWORD']);
+                    delete req.body['PASSWORD'];
+                    req.body['PASSWORD'] = req.body['hashedPassword'];
+                    delete req.body['hashedPassword'];
+                    await cursor.collection(String(req.body['EMPRESA']).toLowerCase()).insertOne(req.body)
+                        .then(resp => {
+                            if(Object.keys(resp.ops[0]).includes('_id')){
+                                return resp.ops[0];
+                            }else{
+                                res.send(500).json();   
+                            }
+                        })
+                        .then(async data => {
+                            await cursor.collection('login').insertOne({
+                                USER_ID: data['_id'],
+                                NOME_COMPLETO: data['NOME_COMPLETO'],
+                                EMAIL: data['EMAIL'],
+                                PASSWORD: data['PASSWORD'],
+                                EMPRESA: data['EMPRESA'],
+                                CARGO: data['CARGO'],
+                                TOKEN:'',
+                                IS_LOGGED: false,
+                                LAST_LOGIN: ''
+                            })
+                            .then(resp => {
+                                res.send(resp);
+                            })
+                            .catch(err => console.error(err));
+                        })
+                        .catch(err => console.error(err));                    
+                }                                                            
                 }catch(err){
-                    return res.status(500).end(JSON.stringify(err));    
+                    res.status(500).end(JSON.stringify(err));    
                 }
             }else{
                 return res.status(400).end(JSON.stringify({'Message':'Missing Fields.'}));    
