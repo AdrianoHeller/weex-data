@@ -376,6 +376,20 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
     }
   });
   
+  app.get("/apiweex/videos", async (req, res) => {
+      const cursor = await db.db()
+      if (req.method === 'GET') {
+        try {
+            const data = await cursor.collection('videos').find().toArray()
+            return res.status(200).send(JSON.stringify(data))
+        } catch (err) {
+            return res.send(err)
+        }
+      } else {
+          return res.status(405).end(JSON.stringify({Message: "Method not Allowed."}))
+      }
+  })
+  
   const server = app.listen(PORT, HOST);
   
   server.keepAliveTimeout = 61 * 1000;
