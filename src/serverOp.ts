@@ -402,7 +402,7 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
   });
   
   app.get("/apiweex/videos", async (req, res) => {
-      const cursor = await db.db()
+      const cursor = db.db()
       if (req.method === 'GET') {
         try {
             const data = await cursor.collection('videos').find().toArray()
@@ -411,7 +411,31 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
             return res.send(err)
         }
       } else {
-          return res.status(405).end(JSON.stringify({Message: "Method not Allowed."}))
+          return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
+      }
+  })
+
+  interface IVideoProps{
+    user: string;
+    userAvatar: string;
+    message: string;
+    dataCreated: string;
+};
+
+  app.post("/apiweex/videos/comment/:id", async (req, res) => {
+      const id = req.params.id
+      const cursor = db.db()
+      const body = req.body
+
+      if (req.method == "POST") {
+          try {
+              await cursor.collection('videos').findOneAndUpdate({_id: new ObjectId(id)}, {$push: {comments: body}})
+              return res.status(200).send(body)
+          } catch (err) {
+              res.send(err)
+          }
+      } else {
+          return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
       }
   })
   
