@@ -425,7 +425,7 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
   app.post("/apiweex/videos/comment/:id", async (req, res) => {
       const id = req.params.id
       const cursor = db.db()
-      const body = req.body
+      const body:IVideoProps = req.body
 
       if (req.method == "POST") {
           try {
@@ -437,6 +437,28 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
       } else {
           return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
       }
+  })
+
+  app.get("/apiweex/videos/comments/:id", async (req, res) => {
+      const id = req.params.id
+      const cursor = db.db()
+
+      if (req.method == "GET") {
+        try {
+            const data = await cursor
+                .collection('videos')
+                .findOne({_id: new ObjectId(id)}, {fields: {_id: 0, comments: 1}})
+            return res
+                .status(200)
+                .send(data)
+        } catch (err) {
+            res.send(err)
+        }
+      } else {
+          return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
+      }
+      
+
   })
   
   const server = app.listen(PORT, HOST);
