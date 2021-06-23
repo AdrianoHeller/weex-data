@@ -438,7 +438,9 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
           return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
       }
   })
-
+interface ILike {
+    user_id: string
+}
   app.get("/apiweex/videos/comments/:id", async (req, res) => {
       const id = req.params.id
       const cursor = db.db()
@@ -457,10 +459,44 @@ app.get("/apiweex/usuarios/:empresa/:id", async (req, res) => {
       } else {
           return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
       }
-      
+  })
 
+  app.post("/apiweex/videos/like/:id", async (req, res) => {
+      const id = req.params.id
+      const cursor = db.db()
+      const user_id:ILike = req.body.user_id
+
+      if (req.method == "POST") {
+          try {
+              const data = await cursor.collection('videos').findOneAndUpdate({_id: new ObjectId(id)}, {$addToSet: {likes: user_id}})
+              res.status(200).send(data)
+          } catch (err) {
+              res.status(500).send(err)
+          }
+      } else {
+          return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
+      }
   })
   
+  app.put("/apiweex/videos/removelike/:id", async (req, res) => {
+    const id = req.params.id
+    const cursor = db.db()
+    const user_id:ILike = req.body.user_id
+
+    if (req.method == "PUT") {
+        try {
+            const data = await cursor.collection('videos').findOneAndUpdate({_id: new ObjectId(id)}, {$pull: {likes: user_id}}, (err, doc) => {
+                console.log(err)
+                console.log(doc)
+            })
+            res.status(200).send(data)
+        } catch (err) {
+            res.status(500).send(err)
+        }
+    } else {
+        return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
+    }
+})
   const server = app.listen(PORT, HOST);
   
   server.keepAliveTimeout = 61 * 1000;
