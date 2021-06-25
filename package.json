@@ -23,6 +23,7 @@
     "@types/helmet": "^4.0.0",
     "@types/mongodb": "^3.6.9",
     "@types/morgan": "^1.9.2",
+    "@types/multer": "^1.4.6",
     "@types/mysql": "^2.15.17",
     "@types/node": "^14.14.27",
     "body-parser": "^1.19.0",
@@ -32,6 +33,7 @@
     "helmet": "^4.6.0",
     "mongodb": "^3.6.4",
     "morgan": "^1.10.0",
+    "multer": "^1.4.2",
     "mysql": "^2.18.1"
   },
   "devDependencies": {
