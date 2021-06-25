@@ -1,11 +1,15 @@
 import express from 'express';
+import multer from 'multer';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import db from './db';
+import fs from 'fs';
+import path, { join } from 'path';
 import { ObjectId } from 'mongodb';
 import { createHmac } from 'crypto';
+import filesNameFilter from './filesNameFilter';
 import { interpolateBirthDate } from './helpers';
 
 const hashData = (targetData:string): string => {
@@ -45,6 +49,8 @@ const PORT = Number(process.env.PORT) | 5001;
 const HOST = '0.0.0.0';
 
 const app = express();
+
+app.use(express.static(join(__dirname, '../uploads')));
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -497,6 +503,50 @@ interface ILike {
         return res.status(405).send(JSON.stringify({Message: "Method not Allowed."}))
     }
 })
+
+
+const storage = multer.diskStorage({
+    destination: './uploads',
+    filename: (req,file,callback) => {
+        const filteredPic = filesNameFilter(`${req.params.user_id}${req.params.flag}`)
+        if (filteredPic[0] && filteredPic.length === 1){
+            fs.unlinkSync(path.join(__dirname, `../uploads/${filteredPic[0]}`))
+        }
+        const processedMimetype = file.mimetype.split('/')[1];
+        callback(null, 'WEEX' + '-' +`${Math.floor(Math.random() * 100)}-${req.params.user_id}${req.params.flag}.${processedMimetype}`);
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: {
+        fileSize: 1000000
+    }
+}).single('image');
+
+app.post('/apiweex/upload/:user_id/:flag',(req,res) => {
+    upload(req,res,(err:any) => {
+        if(!err){
+            console.log('Request:',req.body);
+            console.log('File:',req.file);
+            res.sendStatus(200);
+            res.end();
+        }else{
+            res.sendStatus(500);
+            res.end(err);
+        };
+    });
+    
+});
+
+app.get('/apiweex/avatar/:imageName',(req,res) => {
+    if (req.params.imageName !== "undefined"){
+        const filteredImage = filesNameFilter(req.params.imageName)
+        return res.status(200).send(filteredImage).end();
+    }
+    res.status(400).send({message: `${req.params.imageName} does not exist`}).end();
+});
+
   const server = app.listen(PORT, HOST);
   
   server.keepAliveTimeout = 61 * 1000;
