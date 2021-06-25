@@ -10,7 +10,6 @@ import path, { join } from 'path';
 import { ObjectId } from 'mongodb';
 import { createHmac } from 'crypto';
 import filesNameFilter from './filesNameFilter';
-import { interpolateBirthDate } from './helpers';
 
 const hashData = (targetData:string): string => {
     if(targetData.length > 0){
