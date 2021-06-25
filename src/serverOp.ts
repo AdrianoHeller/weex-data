@@ -49,7 +49,11 @@ const HOST = '0.0.0.0';
 
 const app = express();
 
-app.use(express.static(join(__dirname, '../uploads')));
+app.use(cors());
+
+app.use(morgan('combined'));
+
+app.use('/apiweex', express.static(join(__dirname, '../uploads')));
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -57,9 +61,6 @@ app.use(bodyParser.urlencoded({
 
 app.use(bodyParser.json());
 
-app.use(cors());
-
-app.use(morgan('combined'));
 
 app.use(helmet());
 
@@ -546,7 +547,7 @@ app.get('/apiweex/avatar/:imageName',(req,res) => {
     res.status(400).send({message: `${req.params.imageName} does not exist`}).end();
 });
 
-  const server = app.listen(PORT, HOST);
+  const server = app.listen(PORT, HOST, () => console.log('TESTE AQUI PORRA: ', __dirname));
   
   server.keepAliveTimeout = 61 * 1000;
   
