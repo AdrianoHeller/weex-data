@@ -547,7 +547,7 @@ app.get('/apiweex/avatar/:imageName',(req,res) => {
     res.status(400).send({message: `${req.params.imageName} does not exist`}).end();
 });
 
-  const server = app.listen(PORT, HOST, () => console.log('TESTE AQUI PORRA: ', __dirname));
+  const server = app.listen(PORT, HOST);
   
   server.keepAliveTimeout = 61 * 1000;
   
