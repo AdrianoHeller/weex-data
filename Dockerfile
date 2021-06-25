@@ -29,22 +29,4 @@ ENTRYPOINT [ "/sbin/tini","--" ]
 
 CMD ["node","build/serverOp.js"]
 
-# FROM nginx:1.18.0
-
-# COPY --from=prod ./build /usr/share/nginx/html
-
-# COPY nginx/default.conf /usr/share/nginx/conf.d/default.conf
-
-# EXPOSE 80
-
-# CMD ["nginx","-g","daemon off;"]
-
-# Dev Stage
-# FROM prod as dev
-
-# ENV NODE_ENV=development
-
-# RUN npm install --only=development
-
-# CMD ["./node_modules/nodemon/bin/nodemon.js","./build/index.js"]
 
