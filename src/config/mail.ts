@@ -5,4 +5,4 @@ const config = {
   "pass": "cf41702c1991e7"
 }
 
-export default config
+export default config;
