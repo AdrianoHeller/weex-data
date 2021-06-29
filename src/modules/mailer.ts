@@ -18,9 +18,9 @@ transport.use(
   "compile",
   hbs({
     viewEngine: "handlebars",
-    viewPath: path.resolve("./src/resources/mail"),
+    viewPath: path.resolve("./src/resources/mail/auth"),
     extname: ".html",
-  } as NodemailerExpressHandlebarsOptions)
+  } as any)
 );
 
 export default transport;
