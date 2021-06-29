@@ -12,7 +12,7 @@ import crypto, { createHmac } from "crypto";
 import filesNameFilter from "./filesNameFilter";
 import config from "./config/mail"
 import exphdbs from 'express-handlebars';
-import mailer from 'nodemailer';
+import mailer from './modules/mailer';
 
 const hashData = (targetData: string): string => {
   if (targetData.length > 0) {
@@ -694,11 +694,11 @@ app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
 
     console.log(token, now);
 
-    mailer.(
+    mailer.sendMail(
       {
         to: email,
         from: "noreply@weexpass.com",
-        template: "auth/forgor_password",
+        template: "auth/forgot_password",
         context: { token },
       },
       (err: any) => {
