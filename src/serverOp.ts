@@ -13,6 +13,7 @@ import filesNameFilter from "./filesNameFilter";
 import config from "./config/mail"
 import exphdbs from 'express-handlebars';
 import mailer from 'nodemailer';
+import sendMail from './services/mailSender';
 
 const hashData = (targetData: string): string => {
   if (targetData.length > 0) {
@@ -670,13 +671,11 @@ app.get("/apiweex/avatar/:imageName", (req, res) => {
     .end();
 });
 
-app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
+app.post("/apiweex/usuarios/recuperar_senha", async(req, res)=>{
 
   const cursor = db.db();
-  console.log(cursor);
   const { email } = req.body;
-  try {
-    const user = await cursor.collection("login").findOne({ EMAIL: email });
+  const user = await cursor.collection("login").findOne({ EMAIL: email });
     if (!user) {
       return res.status(400).send({ error: "User not found" });
     }
@@ -692,34 +691,11 @@ app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
       },
     });
 
-    console.log(token, now);
+    await sendMail('gustavobarsan@gmail.com','noreply@weexpass.com','./resources/mail/auth/forgot_password.html',true)
+          .then(resp => console.log(resp))
+          .catch(err => console.error(err))
 
-    mailer.(
-      {
-        to: email,
-        from: "noreply@weexpass.com",
-        template: "auth/forgor_password",
-        context: { token },
-      },
-      (err: any) => {
-        if (err)
-          return res.status(400).send({ error: "Cannot send forgot password" });
-      }
-    );
-  } catch (error) {
-    return res.status(400).send({ error: "User not found" });
-  }
 });
-
-// app.post("/apiweex/usuarios/modificar_senha/", async (req, res) => {
-//   const { email, password, newPassword } = req.body;
-//   const cursor = db.db();
-//   const { token } = req.params;
-//   try {
-//   } catch (error) {
-//     return res.status(400).send({ error: "User not found" });
-//   }
-// });
 
 const server = app.listen(PORT, HOST);
 
