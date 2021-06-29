@@ -10,7 +10,9 @@ import path, { join } from "path";
 import { ObjectId } from "mongodb";
 import crypto, { createHmac } from "crypto";
 import filesNameFilter from "./filesNameFilter";
-import mailer from "./config/mail"
+import config from "./config/mail"
+import exphdbs from 'express-handlebars';
+import mailer from 'nodemailer';
 
 const hashData = (targetData: string): string => {
   if (targetData.length > 0) {
@@ -70,6 +72,12 @@ app.use(
 app.use(bodyParser.json());
 
 app.use(helmet());
+
+//Code Injection from Handlebars
+
+app.engine('handlebars', exphdbs());
+
+app.set('view_engine', 'handlebars');
 
 app.disable("x-powered-by");
 
@@ -686,7 +694,7 @@ app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
 
     console.log(token, now);
 
-    mailer.sendMail(
+    mailer.(
       {
         to: email,
         from: "noreply@weexpass.com",
