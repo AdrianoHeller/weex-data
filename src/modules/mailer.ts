@@ -1,6 +1,6 @@
 import path from "path";
 import nodemailer from "nodemailer";
-import hbs from "nodemailer-express-handlebars";
+import hbs,{ NodemailerExpressHandlebarsOptions } from "nodemailer-express-handlebars";
 import config from "../config/mail";
 
 const { host, port, user, pass } = config;
@@ -20,7 +20,7 @@ transport.use(
     viewEngine: "handlebars",
     viewPath: path.resolve("./src/resources/mail"),
     extname: ".html",
-  })
+  } as NodemailerExpressHandlebarsOptions)
 );
 
 export default transport;
