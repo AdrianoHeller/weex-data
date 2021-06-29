@@ -692,19 +692,6 @@ app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
     });
 
     console.log(token, now);
-
-    mailer.sendMail(
-      {
-        to: email,
-        from: "noreply@weexpass.com",
-        template: "auth/forgot_password",
-        context: { token },
-      },
-      (err: any) => {
-        if (err)
-          return res.status(400).send({ error: "Cannot send forgot password" });
-      }
-    );
   } catch (error) {
     return res.status(400).send({ error: "User not found" });
   }
