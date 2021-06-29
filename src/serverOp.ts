@@ -10,9 +10,9 @@ import path, { join } from "path";
 import { ObjectId } from "mongodb";
 import crypto, { createHmac } from "crypto";
 import filesNameFilter from "./filesNameFilter";
-import config from "./config/mail"
-import exphdbs from 'express-handlebars';
-import mailer from './modules/mailer';
+import config from "./config/mail";
+import exphdbs from "express-handlebars";
+import mailer from "./modules/mailer";
 
 const hashData = (targetData: string): string => {
   if (targetData.length > 0) {
@@ -75,9 +75,9 @@ app.use(helmet());
 
 //Code Injection from Handlebars
 
-app.engine('handlebars', exphdbs());
+app.engine("handlebars", exphdbs());
 
-app.set('view_engine', 'handlebars');
+app.set("view_engine", "handlebars");
 
 app.disable("x-powered-by");
 
@@ -671,7 +671,6 @@ app.get("/apiweex/avatar/:imageName", (req, res) => {
 });
 
 app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
-
   const cursor = db.db();
   console.log(cursor);
   const { email } = req.body;
@@ -710,16 +709,6 @@ app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
     return res.status(400).send({ error: "User not found" });
   }
 });
-
-// app.post("/apiweex/usuarios/modificar_senha/", async (req, res) => {
-//   const { email, password, newPassword } = req.body;
-//   const cursor = db.db();
-//   const { token } = req.params;
-//   try {
-//   } catch (error) {
-//     return res.status(400).send({ error: "User not found" });
-//   }
-// });
 
 const server = app.listen(PORT, HOST);
 
