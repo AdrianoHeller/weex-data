@@ -10,9 +10,8 @@ import path, { join } from "path";
 import { ObjectId } from "mongodb";
 import crypto, { createHmac } from "crypto";
 import filesNameFilter from "./filesNameFilter";
-import config from "./config/mail";
 import exphdbs from "express-handlebars";
-import mailer from "./modules/mailer";
+import sendMail from "./services/mailSender";
 
 const hashData = (targetData: string): string => {
   if (targetData.length > 0) {
@@ -672,28 +671,66 @@ app.get("/apiweex/avatar/:imageName", (req, res) => {
 
 app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
   const cursor = db.db();
-  console.log(cursor);
   const { email } = req.body;
-  try {
-    const user = await cursor.collection("login").findOne({ EMAIL: email });
-    if (!user) {
-      return res.status(400).send({ error: "User not found" });
-    }
+  const user = await cursor.collection("login").findOne({ EMAIL: email });
 
-    const token = crypto.randomBytes(20).toString("hex");
-    const now = new Date();
-    now.setHours(now.getHours() + 1);
+  if (!user) {
+    return res.status(400).send({ error: "User not found" });
+  }
 
-    await cursor.collection("USER").findOneAndUpdate(user.id, {
+  const token = crypto.randomBytes(20).toString("hex");
+  const now = new Date();
+  now.setHours(now.getHours() + 1);
+
+  await cursor.collection("login").findOneAndUpdate(
+    { _id: user._id },
+    {
       $set: {
         passwordResetToken: token,
         passwordResetExpires: now,
       },
-    });
+    },
+    {
+      upsert: true,
+    }
+  );
+  return res.send(JSON.stringify(token));
+  // await sendMail(email, token, res)
+  //   .then((resp) => console.log(resp))
+  //   .catch((err) => console.error(err));
+});
 
-    console.log(token, now);
-  } catch (error) {
-    return res.status(400).send({ error: "User not found" });
+app.post("/apiweex/usuarios/modificar_senha", async (req, res) => {
+  const { email, senha, token } = req.body;
+  const cursor = db.db();
+  const now = new Date();
+  try {
+    const user = await cursor.collection("login").findOne({ EMAIL: email });
+    if (!user) return res.status(400).send({ error: "User not found" });
+
+    if (token !== user.passwordResetToken)
+      return res.status(400).send({ error: "Invalid token" });
+
+    if (now > user.passwordResetExpires)
+      return res.status(400).send({ error: "Expired token" });
+
+    delete user.PASSWORD;
+
+    await cursor.collection("login").findOneAndUpdate(
+      { _id: user._id },
+      {
+        $set: {
+          PASSWORD: hashData(senha),
+        },
+      },
+      {
+        upsert: true,
+      }
+    );
+
+    return res.send(JSON.stringify(senha));
+  } catch (err) {
+    res.status(400).send({ error: "Cannot reset password, try again" });
   }
 });
 
