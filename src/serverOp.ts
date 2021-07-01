@@ -10,6 +10,7 @@ import path, { join } from 'path';
 import { ObjectId } from 'mongodb';
 import { createHmac } from 'crypto';
 import filesNameFilter from './filesNameFilter';
+import { cursorTo } from 'node:readline';
 
 const hashData = (targetData:string): string => {
     if(targetData.length > 0){
@@ -546,6 +547,44 @@ app.get('/apiweex/avatar/:imageName',(req,res) => {
     }
     res.status(400).send({message: `${req.params.imageName} does not exist`}).end();
 });
+
+app.get('/apiweex/colors/:companyName', async (req, res) => {
+    const companyName = req.params.companyName
+    const cursor = db.db()
+    
+    if (req.method === 'GET') {
+        try {
+              const data = await cursor.collection('colors').findOne({company: companyName}, {fields: {_id: 0, colors: 1}})
+              if (data === null) {
+                  return res.status(404).send({message: "Company not found."})
+              }
+              return res.status(200).send(data)
+        } catch (err) {
+            res.status(500).send(err)
+        }
+    } else {
+        return res.send(405).send(JSON.stringify({Message: "Method not allowed."}))
+    }
+})
+
+app.post('/apiweex/colors', async (req, res) => {
+    const cursor = db.db()
+    
+    if (req.method === 'POST') {
+        try {
+            const company = await cursor.collection('colors').findOne({'company': req.body.company})
+            console.log(company)
+            if (company !== null) {
+                return res.status(400).send({Message: "Registro da empresa já encontrado"})
+            } 
+            return res.status(200).send('ok')
+        } catch (err) {
+            res.status(500).send(err)
+        }
+    } else {
+        return res.status(405).send(JSON.stringify({Message: "Method not allowed."}))
+    }
+})
 
   const server = app.listen(PORT, HOST);
   
