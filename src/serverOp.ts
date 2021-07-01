@@ -694,10 +694,10 @@ app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
       upsert: true,
     }
   );
-  return res.send(JSON.stringify(token));
-  // await sendMail(email, token, res)
-  //   .then((resp) => console.log(resp))
-  //   .catch((err) => console.error(err));
+  // return res.send(JSON.stringify(token));
+  await sendMail(email, token, res)
+    .then((resp) => console.log(resp))
+    .catch((err) => console.error(err));
 });
 
 app.post("/apiweex/usuarios/modificar_senha", async (req, res) => {

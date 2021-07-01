@@ -18,6 +18,7 @@ const sendMail = async (
         html: `<p>Seu token: ${token}<p>`,
       },
       (err) => {
+        debugger;
         if (err)
           return res
             .status(400)

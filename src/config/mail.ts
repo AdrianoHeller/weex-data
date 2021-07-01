@@ -1,8 +1,13 @@
-const config = {
-  host: "smtp.mailtrap.com",
-  port: 2525,
-  user: "12a0131bc7ca05",
-  pass: "cf41702c1991e7",
+import { config } from "dotenv";
+import { join } from "path";
+
+config({ path: join(__dirname, "../.env") });
+
+const configure = {
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  user: process.env.SMTP_USER,
+  pass: process.env.SMTP_PASS,
 };
 
-export default config;
+export default configure;
