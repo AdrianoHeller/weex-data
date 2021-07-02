@@ -573,11 +573,11 @@ app.post('/apiweex/colors', async (req, res) => {
     if (req.method === 'POST') {
         try {
             const company = await cursor.collection('colors').findOne({'company': req.body.company})
-            console.log(company)
             if (company !== null) {
                 return res.status(400).send({Message: "Registro da empresa já encontrado"})
             } 
-            return res.status(200).send('ok')
+            const data = await cursor.collection('colors').insertOne(req.body)
+            return res.status(200).send(data)
         } catch (err) {
             res.status(500).send(err)
         }
