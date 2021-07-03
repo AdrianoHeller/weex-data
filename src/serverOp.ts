@@ -10,6 +10,8 @@ import path, { join } from 'path';
 import { ObjectId } from 'mongodb';
 import { createHmac } from 'crypto';
 import filesNameFilter from './filesNameFilter';
+import nodemailer from 'nodemailer';
+import { transport } from './nodemailerHelpers';
 
 const hashData = (targetData:string): string => {
     if(targetData.length > 0){
@@ -546,6 +548,31 @@ app.get('/apiweex/avatar/:imageName',(req,res) => {
     }
     res.status(400).send({message: `${req.params.imageName} does not exist`}).end();
 });
+
+const sendMail = async (userMail: string, userName: string, subject: string) => {
+    const transporter = nodemailer.createTransport(transport)
+
+    return await transporter.sendMail({
+        from: `${userName} <${userMail}>`,
+        to: 'adriano@weexpass.com.br',
+        replyTo: userMail,
+        subject: `Resgate de ${subject}`,
+        date: new Date()
+    })
+}
+
+app.post('/apiweex/message', async (req, res) => {
+    const userMail = req.body.userMail
+    const userName = req.body.userName
+    const subject = req.body.subject
+
+    try {
+        const mailSent = await sendMail(userMail, userName, subject)
+        res.status(200).send(mailSent).end()
+    } catch (err) {
+        res.status(500).send({"Error": err}).end()
+    }
+})
 
   const server = app.listen(PORT, HOST);
   
