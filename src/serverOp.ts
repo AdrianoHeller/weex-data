@@ -574,6 +574,44 @@ app.post('/apiweex/message', async (req, res) => {
     }
 })
 
+app.get('/apiweex/colors/:companyName', async (req, res) => {
+    const companyName = req.params.companyName
+    const cursor = db.db()
+    
+    if (req.method === 'GET') {
+        try {
+              const data = await cursor.collection('colors').findOne({company: companyName}, {fields: {_id: 0, colors: 1}})
+              if (data === null) {
+                  return res.status(404).send({message: "Company not found."})
+              }
+              return res.status(200).send(data)
+        } catch (err) {
+            res.status(500).send(err)
+        }
+    } else {
+        return res.send(405).send(JSON.stringify({Message: "Method not allowed."}))
+    }
+})
+
+app.post('/apiweex/colors', async (req, res) => {
+    const cursor = db.db()
+    
+    if (req.method === 'POST') {
+        try {
+            const company = await cursor.collection('colors').findOne({'company': req.body.company})
+            if (company !== null) {
+                return res.status(400).send({Message: "Registro da empresa já encontrado"})
+            } 
+            const data = await cursor.collection('colors').insertOne(req.body)
+            return res.status(200).send(data)
+        } catch (err) {
+            res.status(500).send(err)
+        }
+    } else {
+        return res.status(405).send(JSON.stringify({Message: "Method not allowed."}))
+    }
+})
+
   const server = app.listen(PORT, HOST);
   
   server.keepAliveTimeout = 61 * 1000;
