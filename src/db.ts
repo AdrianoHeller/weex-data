@@ -4,13 +4,13 @@ import { join } from 'path';
 
 config({ path: join(__dirname,'../.env')});
 
-const localStringConn: string = 'mongodb://127.0.0.1:27017/weex';
+const stagingUri: string = process.env.MONGO_DB_STAGING_URI!;
 
-const connectionString: string = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PWD}@cluster0.t0iml.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`;
+const productionUri: string = process.env.MONGO_DB_PRODUCTION_URI!;
 
-const environmentString = process.env.NODE_ENV === 'dev' ? process.env.MONGO_URI_DEV : process.env.MONGO_URI_PROD;
+const environmentString = process.env.NODE_ENV === 'production' ? productionUri : stagingUri ;
 
-const connection = new MongoClient(connectionString,{
+const connection = new MongoClient(environmentString,{
     useUnifiedTopology:true,
     useNewUrlParser: true
 });
