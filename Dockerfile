@@ -1,6 +1,10 @@
 # Prod Stage
 FROM node:12.20.2-alpine3.12 as builder
 
+ARG ENV=staging
+
+ENV NODE_ENV=${ENV}
+
 WORKDIR /src/app
 
 RUN mkdir -p /src/app/build
