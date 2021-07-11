@@ -8,7 +8,7 @@ const stagingUri: string = process.env.MONGO_DB_STAGING_URI!;
 
 const productionUri: string = process.env.MONGO_DB_PRODUCTION_URI!;
 
-const environmentString = process.env.NODE_ENV === 'production' ? productionUri : stagingUri ;
+const environmentString: string = process.env.NODE_ENV! === 'production' ? productionUri : stagingUri ;
 
 const connection = new MongoClient(environmentString,{
     useUnifiedTopology:true,
