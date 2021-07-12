@@ -10,7 +10,7 @@ const productionUri: string = process.env.MONGO_DB_PRODUCTION_URI!;
 
 const environmentString: string = process.env.NODE_ENV! === 'production' ? productionUri : stagingUri ;
 
-const connection = new MongoClient(environmentString,{
+const connection = new MongoClient("mongodb+srv://gustavo:gustavo@cluster0.t0iml.mongodb.net/weex?authSource=admin&replicaSet=atlas-8r48ai-shard-0&w=majority&readPreference=primary&appname=MongoDB%20Compass&retryWrites=true&ssl=true",{
     useUnifiedTopology:true,
     useNewUrlParser: true
 });
