@@ -1,9 +1,7 @@
 import sender from "../modules/mailer";
-// import pug from "pug";
+import pug from "pug";
 import { Response } from "express";
-// pug.renderFile(`${__dirname}/templates/forgot_password.pug`, {
-//     token: token,
-//   })
+
 const sendMail = async (
   email: string,
   token: string,
@@ -15,7 +13,9 @@ const sendMail = async (
         to: email,
         from: "noreply@weexpass.com",
         subject: "Recuperar senha weex",
-        html: `<p>Seu token: ${token}<p>`,
+        html: pug.renderFile(__dirname + "/templates/forgot_password.pug", {
+          token: token,
+        })
       },
       (err) => {
         debugger;

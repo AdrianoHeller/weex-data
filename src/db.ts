@@ -4,7 +4,7 @@ import { join } from "path";
 
 config({ path: join(__dirname, "../.env") });
 
-const localStringConn: string = "mongodb://127.0.0.1:27017/weex";
+const localStringConn: string = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PWD}@cluster0.t0iml.mongodb.net/${process.env.MONGO_DB_NAME}}?retryWrites=true&w=majority`;
 
 const connectionString: string = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PWD}@cluster0.t0iml.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`;
 

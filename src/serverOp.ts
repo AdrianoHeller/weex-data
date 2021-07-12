@@ -541,6 +541,7 @@ app.post("/apiweex/videos/comment/:id", async (req, res) => {
 interface ILike {
   user_id: string;
 }
+
 app.get("/apiweex/videos/comments/:id", async (req, res) => {
   const id = req.params.id;
   const cursor = db.db();
@@ -694,7 +695,7 @@ app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
       upsert: true,
     }
   );
-  // return res.send(JSON.stringify(token));
+
   await sendMail(email, token, res)
     .then((resp) => console.log(resp))
     .catch((err) => console.error(err));

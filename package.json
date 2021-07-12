@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "nodemon node build/serverOp.js"
+    "dev": "nodemon node build/serverOp.js",
+    "build": "tsc && cp -r ./src/services/templates ./build/services"
   },
   "repository": {
     "type": "git",
