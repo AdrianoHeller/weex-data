@@ -8,10 +8,11 @@ import db from './db';
 import fs from 'fs';
 import path, { join } from 'path';
 import { ObjectId } from 'mongodb';
-import { createHmac } from 'crypto';
+import crypto, { createHmac } from 'crypto';
 import filesNameFilter from './filesNameFilter';
 import nodemailer from 'nodemailer';
 import { transport } from './nodemailerHelpers';
+import mailSender from "./services/mailSender";
 
 const hashData = (targetData:string): string => {
     if(targetData.length > 0){
@@ -616,6 +617,72 @@ app.post('/apiweex/colors', async (req, res) => {
         return res.status(405).send(JSON.stringify({Message: "Method not allowed."}))
     }
 })
+
+app.post("/apiweex/usuarios/recuperar_senha", async (req, res) => {
+    const cursor = db.db();
+    const { email } = req.body;
+    const user = await cursor.collection("login").findOne({ EMAIL: email });
+  
+    if (!user) {
+      return res.status(400).send({ error: "User not found" });
+    }
+  
+    const token = crypto.randomBytes(20).toString("hex");
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+  
+    await cursor.collection("login").findOneAndUpdate(
+      { _id: user._id },
+      {
+        $set: {
+          passwordResetToken: token,
+          passwordResetExpires: now,
+        },
+      },
+      {
+        upsert: true,
+      }
+    );
+  
+    await mailSender(email, token, res)
+      .then((resp) => console.log(resp))
+      .catch((err) => console.error(err));
+  });
+  
+  app.post("/apiweex/usuarios/modificar_senha", async (req, res) => {
+    const { email, senha, token } = req.body;
+    const cursor = db.db();
+    const now = new Date();
+    try {
+      const user = await cursor.collection("login").findOne({ EMAIL: email });
+      if (!user) return res.status(400).send({ error: "User not found" });
+  
+      if (token !== user.passwordResetToken)
+        return res.status(400).send({ error: "Invalid token" });
+  
+      if (now > user.passwordResetExpires)
+        return res.status(400).send({ error: "Expired token" });
+  
+      delete user.PASSWORD;
+  
+      await cursor.collection("login").findOneAndUpdate(
+        { _id: user._id },
+        {
+          $set: {
+            PASSWORD: hashData(senha),
+          },
+        },
+        {
+          upsert: true,
+        }
+      );
+  
+      return res.send(JSON.stringify(senha));
+    } catch (err) {
+      res.status(400).send({ error: "Cannot reset password, try again" });
+    }
+  });
+  
 
   const server = app.listen(PORT, HOST);
   
