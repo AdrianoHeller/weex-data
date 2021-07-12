@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+    mainserver:
+        image: oadrianoo/weex-mainserver:0.1
+        build: .
+        restart: unless-stopped
+        env_file: ./.env
+        depends_on:
+            - mongo
+        ports:
+            - "5001:5001"
+        network:
+            - weex        
+    mongo:
+        image: mongo
+        ports:
+            - "27017:27017"
+        network:
+            - weex
+networks:
+    driver: default
+    name: weex 

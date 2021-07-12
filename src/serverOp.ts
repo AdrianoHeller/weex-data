@@ -10,6 +10,8 @@ import path, { join } from 'path';
 import { ObjectId } from 'mongodb';
 import { createHmac } from 'crypto';
 import filesNameFilter from './filesNameFilter';
+import nodemailer from 'nodemailer';
+import { transport } from './nodemailerHelpers';
 
 const hashData = (targetData:string): string => {
     if(targetData.length > 0){
@@ -508,12 +510,17 @@ interface ILike {
 const storage = multer.diskStorage({
     destination: './uploads',
     filename: (req,file,callback) => {
-        const filteredPic = filesNameFilter(`${req.params.user_id}${req.params.flag}`)
+        const filteredPic = filesNameFilter(req.params.identifier, '')
         if (filteredPic[0] && filteredPic.length === 1){
             fs.unlinkSync(path.join(__dirname, `../uploads/${filteredPic[0]}`))
         }
         const processedMimetype = file.mimetype.split('/')[1];
-        callback(null, 'WEEX' + '-' +`${Math.floor(Math.random() * 100)}-${req.params.user_id}${req.params.flag}.${processedMimetype}`);
+
+        if (!req.params.identifier.includes('_PROFILE')){
+            callback(null, `${req.params.identifier}` + '-' +`${Math.floor(Math.random() * 100)}_LOGO.${processedMimetype}`);
+        } else {
+            callback(null, `WEEX` + '-' +`${Math.floor(Math.random() * 100)}-${req.params.identifier}.${processedMimetype}`);
+        }
     }
 });
 
@@ -524,7 +531,7 @@ const upload = multer({
     }
 }).single('image');
 
-app.post('/apiweex/upload/:user_id/:flag',(req,res) => {
+app.post('/apiweex/upload/:identifier',(req,res) => {
     upload(req,res,(err:any) => {
         if(!err){
             console.log('Request:',req.body);
@@ -539,13 +546,76 @@ app.post('/apiweex/upload/:user_id/:flag',(req,res) => {
     
 });
 
-app.get('/apiweex/avatar/:imageName',(req,res) => {
-    if (req.params.imageName !== "undefined"){
-        const filteredImage = filesNameFilter(req.params.imageName)
+app.get('/apiweex/avatar/:imageName/:empresa',(req,res) => {
+    if (req.params.imageName !== "undefined" && req.params.empresa !== "undefined"){
+        const filteredImage = filesNameFilter(req.params.imageName, req.params.empresa)
         return res.status(200).send(filteredImage).end();
     }
     res.status(400).send({message: `${req.params.imageName} does not exist`}).end();
 });
+
+const sendMail = async (userMail: string, userName: string, subject: string) => {
+    const transporter = nodemailer.createTransport(transport)
+
+    return await transporter.sendMail({
+        from: `${userName} <${userMail}>`,
+        to: 'adriano@weexpass.com.br',
+        replyTo: userMail,
+        subject: `Resgate de ${subject}`,
+        date: new Date()
+    })
+}
+
+app.post('/apiweex/message', async (req, res) => {
+    const userMail = req.body.userMail
+    const userName = req.body.userName
+    const subject = req.body.subject
+
+    try {
+        const mailSent = await sendMail(userMail, userName, subject)
+        res.status(200).send(mailSent).end()
+    } catch (err) {
+        res.status(500).send({"Error": err}).end()
+    }
+})
+
+app.get('/apiweex/colors/:companyName', async (req, res) => {
+    const companyName = req.params.companyName
+    const cursor = db.db()
+    
+    if (req.method === 'GET') {
+        try {
+              const data = await cursor.collection('colors').findOne({company: companyName}, {fields: {_id: 0, colors: 1}})
+              if (data === null) {
+                  return res.status(404).send({message: "Company not found."})
+              }
+              return res.status(200).send(data)
+        } catch (err) {
+            res.status(500).send(err)
+        }
+    } else {
+        return res.send(405).send(JSON.stringify({Message: "Method not allowed."}))
+    }
+})
+
+app.post('/apiweex/colors', async (req, res) => {
+    const cursor = db.db()
+    
+    if (req.method === 'POST') {
+        try {
+            const company = await cursor.collection('colors').findOne({'company': req.body.company})
+            if (company !== null) {
+                return res.status(400).send({Message: "Registro da empresa já encontrado"})
+            } 
+            const data = await cursor.collection('colors').insertOne(req.body)
+            return res.status(200).send(data)
+        } catch (err) {
+            res.status(500).send(err)
+        }
+    } else {
+        return res.status(405).send(JSON.stringify({Message: "Method not allowed."}))
+    }
+})
 
   const server = app.listen(PORT, HOST);
   
